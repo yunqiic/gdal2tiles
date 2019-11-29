@@ -52,7 +52,7 @@
     </MenuBar>
     <Pane prefHeight="545.0" prefWidth="900.0">
       <children>
-        <GridPane alignment="TOP_CENTER" blendMode="SRC_OVER" cache="false" hgap="20.0" layoutX="148.0" layoutY="115.0" prefHeight="315.0" prefWidth="604.0" vgap="20.0">
+        <GridPane alignment="TOP_CENTER" blendMode="SRC_OVER" cache="false" hgap="20.0" layoutX="96.0" layoutY="115.0" prefHeight="315.0" prefWidth="656.0" vgap="20.0">
           <children>
             <AnchorPane id="panelStand" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" style="" GridPane.columnIndex="0" GridPane.rowIndex="0">
               <children>

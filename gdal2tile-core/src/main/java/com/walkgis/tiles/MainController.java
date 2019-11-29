@@ -23,7 +23,6 @@ public class MainController {
         String[] args = "-profile geodetic E:\\Data\\CAOBAO\\aaa.tif E:\\Data\\CAOBAO\\tiles\\java".split(" ");
         GDAL2Tiles gdal2tiles = new GDAL2Tiles(args);
         try {
-
             gdal2tiles.process(geopackageUtil);
         } catch (IOException e) {
             e.printStackTrace();

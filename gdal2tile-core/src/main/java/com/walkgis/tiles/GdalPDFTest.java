@@ -5,12 +5,14 @@ import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
 
 public class GdalPDFTest {
     public static void main(String[] args) {
         // 注册所有的驱动
         gdal.AllRegister();
+        ogr.RegisterAll();
         // 为了支持中文路径，请添加下面这句代码
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
         // 为了使属性表字段支持中文，请添加下面这句
