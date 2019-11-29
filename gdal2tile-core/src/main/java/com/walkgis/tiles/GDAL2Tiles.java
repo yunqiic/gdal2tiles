@@ -1,5 +1,6 @@
 package com.walkgis.tiles;
 
+import com.walkgis.tiles.util.GeopackageUtil;
 import com.walkgis.tiles.util.GlobalGeodetic;
 import com.walkgis.tiles.util.GlobalMercator;
 import com.walkgis.tiles.util.PDFReader;
@@ -16,9 +17,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
 import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
@@ -74,9 +72,11 @@ public class GDAL2Tiles {
     public static boolean geopackage = false;
     private int dataType = 1;
     private int byteToType = 0;
+    private GeopackageUtil geopackageUtil;
 
-    public void process() throws IOException, SQLException {
+    public void process(GeopackageUtil geopackageUtil) throws IOException, SQLException {
         // Opening and preprocessing of the input file
+        this.geopackageUtil = geopackageUtil;
         open_input();
 
         // Generation of main metadata files and HTML viewers
@@ -399,7 +399,7 @@ public class GDAL2Tiles {
 
         try {
             if (geopackage)
-                MainApp.geopackageUtil.createTileTable("home", getBoundBox(), this.tminz, this.tmaxz, this.tileext);
+                geopackageUtil.createTileTable("home", getBoundBox(), this.tminz, this.tmaxz, this.tileext);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (SQLException e) {
@@ -590,7 +590,7 @@ public class GDAL2Tiles {
                     try {
                         this.out_drv.CreateCopy(tilefilename, dstile, 0);
                         if (geopackage)
-                            MainApp.geopackageUtil.insertTile(new File(tilefilename), tz, tx, ty);
+                            geopackageUtil.insertTile(new File(tilefilename), tz, tx, ty);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -603,7 +603,7 @@ public class GDAL2Tiles {
         }
 
         if (geopackage)
-            MainApp.geopackageUtil.createMatrix(tz);
+            geopackageUtil.createMatrix(tz);
     }
 
 
@@ -686,10 +686,10 @@ public class GDAL2Tiles {
                 }
             }
             if (geopackage)
-                MainApp.geopackageUtil.createMatrix(tz);
+                geopackageUtil.createMatrix(tz);
         }
         if (geopackage)
-            MainApp.geopackageUtil.close();
+            geopackageUtil.close();
     }
 
     private void scale_query_to_tile(Dataset dsquery, Dataset dstile, String tilefilename) {

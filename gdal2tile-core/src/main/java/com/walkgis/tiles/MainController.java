@@ -1,28 +1,34 @@
 package com.walkgis.tiles;
 
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.walkgis.tiles.util.GeopackageUtil;
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.sql.SQLException;
 
-public class MainController{
-    @FXML
-    private Button myButton;
+public class MainController {
+    private GeopackageUtil geopackageUtil;
 
-    @FXML
-    private TextField myTextField;
+    public MainController() {
+        if (GDAL2Tiles.geopackage) {
+            geopackageUtil = new GeopackageUtil();
+            try {
+                geopackageUtil.initGeopackage("E:\\date\\geopackage\\home.gpkg");
+            } catch (FileAlreadyExistsException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-    public void showDateTime(ActionEvent event) {
-        System.out.println("Button Clicked!");
+    public void generateTile() {
+        String[] args = "-profile geodetic E:\\Data\\CAOBAO\\aaa.tif E:\\Data\\CAOBAO\\tiles\\java".split(" ");
+        GDAL2Tiles gdal2tiles = new GDAL2Tiles(args);
+        try {
 
-        Date now = new Date();
-
-        DateFormat df = new SimpleDateFormat("yyyy-dd-MM HH:mm:ss");
-        String dateTimeString = df.format(now);
-        // Show in VIEW
-        myTextField.setText(dateTimeString);
+            gdal2tiles.process(geopackageUtil);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
