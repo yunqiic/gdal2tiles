@@ -8,8 +8,8 @@ import java.util.LinkedList;
  * Date: 2017/12/13.
  */
 public class Zoomify {
-    private int tilesize;
-    private String tileFormat;
+    private int tilesize = 256;
+    private String tileFormat = "jpg";
     private LinkedList<double[]> tierSizeInTiles;
     private LinkedList tierImageSize;
     private int numberOfTiers;

@@ -3,6 +3,8 @@ package com.walkgis.tiles.util;
 
 import com.walkgis.tiles.common.ContentValue;
 
+import static com.walkgis.tiles.common.ContentValue.MAXZOOMLEVEL;
+
 /**
  * Created by JerFer
  * Date: 2017/12/13.
@@ -12,7 +14,7 @@ public class GlobalGeodetic {
     private double resFact;
 
     public GlobalGeodetic(String tmscompatible, int tileSize) {
-        this.tileSize = tileSize;
+        this.tileSize = tileSize = 256;
         // Defaults the resolution factor to 0.703125 (2 tiles @ level 0)
         if (tmscompatible != null && tmscompatible.length() > 0) {
             this.resFact = 180.0 / this.tileSize;
@@ -43,13 +45,12 @@ public class GlobalGeodetic {
     }
 
     public int zoomForPixelSize(double pixelSize) {
-        for (int i = 0; i < ContentValue.MAXZOOMLEVEL; i++) {
+        for (int i = 0; i < MAXZOOMLEVEL; i++) {
             if (pixelSize > resolution(i)) {
-                if (i != 0) return i - 1;
-                else return 0;
+                return Math.max(0,i-1);
             }
         }
-        return 0;
+        return MAXZOOMLEVEL -1;
     }
 
     public double[] tileBounds(int tx, int ty, int zoom) {

@@ -5,9 +5,12 @@ import org.gdal.ogr.DataSource;
 import org.gdal.ogr.Driver;
 import org.gdal.ogr.ogr;
 
+import java.io.File;
+
 public class GdalShpTest {
     public static void main(String[] args) {
         // 注册所有的驱动
+        gdal.AllRegister();
         ogr.RegisterAll();
         // 为了支持中文路径，请添加下面这句代码
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
@@ -28,6 +31,8 @@ public class GdalShpTest {
             return;
         }
         System.out.println("打开驱动成功！");
+        File file = new File("E:\\Data\\SHP\\node.json");
+        if (file.exists()) file.delete();
         dv.CopyDataSource(ds, "E:\\Data\\SHP\\node.json");
         System.out.println("转换成功！");
     }

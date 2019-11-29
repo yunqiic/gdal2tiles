@@ -1,162 +1,77 @@
 package com.walkgis.tiles.util;
 
-import org.apache.pdfbox.cos.*;
-import org.apache.pdfbox.pdmodel.*;
-import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
-import org.apache.pdfbox.rendering.PDFRenderer;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.Driver;
+import org.gdal.gdal.gdal;
+import org.gdal.gdalconst.gdalconstConstants;
+import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.spatial4j.context.SpatialContextFactory;
-import org.locationtech.spatial4j.io.WKTReader;
-import org.osgeo.proj4j.CRSFactory;
-import org.osgeo.proj4j.CoordinateReferenceSystem;
-
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.Iterator;
 
 public class PDFReader {
-    private CoordinateReferenceSystem referenceSystem;
+    private SpatialReference spatialReference;
     private Envelope envelope;
-
     private int width;
     private int height;
-    private BufferedImage bufferedImage;
-
-    private void printEnvelop(COSBase cosBase) {
-        if (cosBase instanceof COSArray) {
-            COSArray cosArray = (COSArray) cosBase;
-            Coordinate[] coordinates = new Coordinate[5];
-            Coordinate coordinate = null;
-            int flag = 0;
-            for (int i = 0; i < cosArray.size(); i++) {
-                cosBase = cosArray.get(i);
-                if (cosBase instanceof COSFloat) {
-                    if (i % 2 == 0) {
-                        coordinate = new Coordinate();
-                        coordinate.y = ((COSFloat) cosBase).floatValue();
-                    } else {
-                        coordinate.x = ((COSFloat) cosBase).floatValue();
-                        coordinates[flag] = coordinate;
-                        flag++;
-                    }
-                }
-            }
-            coordinates[4] = coordinates[0];
-            Polygon polygon = new GeometryFactory().createPolygon(coordinates);
-            envelope = polygon.getEnvelopeInternal();
-        }
-    }
-
-    private void readReferenceSystem(COSBase cosBase) {
-        if (cosBase instanceof COSDictionary) {
-            COSDictionary dictionary = (COSDictionary) cosBase;
-            cosBase = dictionary.getDictionaryObject("WKT");
-            if (cosBase instanceof COSString) {
-                Integer wkid = new SpatialReference().ImportFromWkt(((COSString) (cosBase)).getString());
-                referenceSystem = new CRSFactory().createFromName("EPSG:" + wkid);
-            }
-        }
-    }
+    private Dataset dataset;
 
     public void init(String file, String imgSavePath) {
-        try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            PDDocument document = PDDocument.load(fileInputStream);
-            int count = 0;
+        // 注册所有的驱动
+        ogr.RegisterAll();
+        // 为了支持中文路径，请添加下面这句代码
+        gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
+        // 为了使属性表字段支持中文，请添加下面这句
+        gdal.SetConfigOption("SHAPE_ENCODING", "");
 
-            PDResources resources = document.getPage(0).getResources();
-
-//            Iterable xobjects = resources.getXObjectNames();
-//            if (xobjects != null) {
-//                Iterator imageIter = xobjects.iterator();
-//                while (imageIter.hasNext()) {
-//                    COSName key = (COSName) imageIter.next();
-//                    if (resources.isImageXObject(key)) {
-//                        try {
-//                            PDImageXObject image = (PDImageXObject) resources.getXObject(key);
-//                            BufferedImage bimage = image.getImage();
-//                            ImageIO.write(bimage, "png", new File(imgSavePath + File.separator + count + ".png"));
-//                            count++;
-//                            System.out.println(count);
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                }
-//            }
-
-            COSDictionary dictionary = document.getPage(0).getCOSObject();
-
-            COSDictionary dictionaryRes = (COSDictionary) dictionary.getDictionaryObject("Resources");
-            COSDictionary dictionaryXObject = (COSDictionary) dictionaryRes.getDictionaryObject("XObject");
-            Iterator iteratorRes = dictionaryXObject.getValues().iterator();
-            count = 0;
-
-            while (iteratorRes.hasNext()) {
-                COSBase item = (COSBase) iteratorRes.next();
-                if (item instanceof COSObject) {
-                    COSObject object = (COSObject) item;
-                    if (object.getObject() instanceof COSDictionary) {
-                        width = ((COSInteger) ((COSDictionary) object.getObject()).getDictionaryObject("Width")).intValue() - 1;
-                        height += ((COSInteger) ((COSDictionary) object.getObject()).getDictionaryObject("Height")).intValue() - 1;
-                    }
-                }
-                count++;
-            }
-
-            COSArray cosArrayMediaBox = (COSArray) dictionary.getDictionaryObject("MediaBox");
-            Iterator<COSBase> iteratorMediaBox = cosArrayMediaBox.iterator();
-            while (iteratorMediaBox.hasNext()) {
-                COSBase cosBase = iteratorMediaBox.next();
-                if (cosBase instanceof COSInteger) {
-                    COSInteger cosInteger = (COSInteger) cosBase;
-                } else if (cosBase instanceof COSFloat) {
-                    COSFloat cosFloat = (COSFloat) cosBase;
-                }
-            }
-
-
-            COSArray cosArray = (COSArray) dictionary.getDictionaryObject("VP");
-            Iterator<COSBase> iterator = cosArray.iterator();
-            while (iterator.hasNext()) {
-                COSBase cosBase = iterator.next();
-                if (cosBase instanceof COSDictionary) {
-                    dictionary = (COSDictionary) cosBase;
-                    cosBase = dictionary.getDictionaryObject("Measure");
-                    if (cosBase instanceof COSDictionary) {
-                        dictionary = (COSDictionary) cosBase;
-                        cosBase = dictionary.getDictionaryObject("GCS");
-                        readReferenceSystem(cosBase);
-                        cosBase = dictionary.getDictionaryObject("GPTS");
-                        printEnvelop(cosBase);
-                    }
-                }
-            }
-            PDFRenderer renderer = new PDFRenderer(document);
-            bufferedImage = renderer.renderImageWithDPI(0, 300);
-//            ImageIO.write(bim, "png", new FileOutputStream(imgSavePath + File.separator + "aaa.png"));
-            document.close();
-            fileInputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (InvalidPasswordException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        this.dataset = gdal.Open(file, gdalconstConstants.GA_ReadOnly);
+        if (dataset == null) {
+            System.out.println("GDAL read error: " + gdal.GetLastErrorMsg());
         }
+
+        this.width = dataset.getRasterXSize();
+        this.height = dataset.getRasterYSize();
+
+        // 左上角点坐标 lon lat: transform[0]、transform[3]
+        // 像素分辨率 x、y方向 : transform[1]、transform[5]
+        // 旋转角度: transform[2]、transform[4])
+        double[] transform = dataset.GetGeoTransform();
+
+        double[] ulCoord = new double[2];
+        ulCoord[0] = transform[0];
+        ulCoord[1] = transform[3];
+
+        double[] brCoord = new double[2];
+        int x = dataset.getRasterXSize();
+        int y = dataset.getRasterYSize();
+        brCoord[0] = transform[0] + x * transform[1] + y * transform[2];
+        brCoord[1] = transform[3] + x * transform[4] + y * transform[5];
+
+//        transform[0]：左上角x坐标
+//        transform[1]：东西方向空间分辨率
+//        transform[2]：x方向旋转角
+//        transform[3]：左上角y坐标
+//        transform[4]：y方向旋转角
+//        transform[5]：南北方向空间分辨率
+        this.envelope = new Envelope(ulCoord[0], brCoord[0], ulCoord[1], brCoord[1]);
+
+        this.spatialReference = new SpatialReference(dataset.GetProjection());
+
     }
 
-    public CoordinateReferenceSystem getReferenceSystem() {
-        return referenceSystem;
+    public int[] getBandList(int bandCount) {
+        int[] bandArray = new int[bandCount];
+        for (int i = 0; i < bandCount; i++) {
+            bandArray[i] = i + 1;
+        }
+        return bandArray;
     }
 
-    public void setReferenceSystem(CoordinateReferenceSystem referenceSystem) {
-        this.referenceSystem = referenceSystem;
+    public SpatialReference getSpatialReference() {
+        return spatialReference;
+    }
+
+    public void setSpatialReference(SpatialReference spatialReference) {
+        this.spatialReference = spatialReference;
     }
 
     public Envelope getEnvelope() {
@@ -183,15 +98,11 @@ public class PDFReader {
         this.height = height;
     }
 
-    public BufferedImage getImage() {
-        return bufferedImage;
+    public Dataset getDataset() {
+        return dataset;
     }
 
-    public BufferedImage getBufferedImage() {
-        return bufferedImage;
-    }
-
-    public void setBufferedImage(BufferedImage bufferedImage) {
-        this.bufferedImage = bufferedImage;
+    public void setDataset(Dataset dataset) {
+        this.dataset = dataset;
     }
 }

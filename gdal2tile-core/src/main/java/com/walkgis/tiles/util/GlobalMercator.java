@@ -3,12 +3,14 @@ package com.walkgis.tiles.util;
 
 import com.walkgis.tiles.common.ContentValue;
 
+import static com.walkgis.tiles.common.ContentValue.MAXZOOMLEVEL;
+
 /**
  * Created by JerFer
  * Date: 2017/12/13.
  */
 public class GlobalMercator {
-    private int tileSize;
+    private int tileSize = 256;
     private double initialResolution;
     private double originShift;
 
@@ -82,14 +84,12 @@ public class GlobalMercator {
     }
 
     public int zoomForPixelSize(double pixelSize) {
-        for (int i = 0; i < ContentValue.MAXZOOMLEVEL; i++) {
+        for (int i = 0; i < MAXZOOMLEVEL; i++) {
             if (pixelSize > this.resolution(i)) {
-                if (i != 0) {
-                    return i - 1;
-                } else return 0;
+                return Math.max(0,i-1);
             }
         }
-        return 0;
+        return MAXZOOMLEVEL - 1;
     }
 
     public int[] googleTile(int tx, int ty, int zoom) {
@@ -112,7 +112,7 @@ public class GlobalMercator {
         }
         return quadKey;
     }
-    
+
         public String tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
         StringBuilder quadKey = new StringBuilder();
         for (int i = levelOfDetail; i > 0; i--) {

@@ -10,9 +10,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import java.io.IOException;
-import java.sql.SQLException;
 
+import java.io.*;
+import java.sql.SQLException;
 
 public class MainApp extends Application {
     public static GeopackageUtil geopackageUtil;
@@ -23,22 +23,23 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        Parent root = FXMLLoader.load(getClass().getResource("mainapp.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/mainapp.fxml"));
         primaryStage.setTitle("地图切片");
-        primaryStage.setScene(new Scene(root, 300, 275));
+        primaryStage.setScene(new Scene(root));
         primaryStage.show();
 
-//        GDAL2Tiles gdal2tiles = new GDAL2Tiles(null);
-//        try {
+        String[] args = "-profile geodetic E:\\Data\\CAOBAO\\aaa.tif E:\\Data\\CAOBAO\\tiles\\java".split(" ");
+        GDAL2Tiles gdal2tiles = new GDAL2Tiles(args);
+        try {
 //            if (GDAL2Tiles.geopackage) {
 //                geopackageUtil = new GeopackageUtil();
 //                geopackageUtil.initGeopackage("E:\\date\\geopackage\\home.gpkg");
 //            }
-//            gdal2tiles.process();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
+            gdal2tiles.process();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

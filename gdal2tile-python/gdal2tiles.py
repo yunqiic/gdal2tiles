@@ -642,7 +642,8 @@ class GDAL2Tiles(object):
                 self.tmaxz = int(min)
 
                 # KML generation
-        self.kml = self.options.kml
+        # self.kml = self.options.kml
+        self.kml = False
 
         # Output the results
 
@@ -721,6 +722,8 @@ class GDAL2Tiles(object):
 
         gdal.AllRegister()
 
+        _version = gdal.VersionInfo()
+
         # Initialize necessary GDAL drivers
 
         self.out_drv = gdal.GetDriverByName(self.tiledriver)
@@ -732,7 +735,6 @@ class GDAL2Tiles(object):
             raise Exception("The 'MEM' driver was not found, is it available in this GDAL build?")
 
         # Open the input file
-
         if self.input:
             self.in_ds = gdal.Open(self.input, gdal.GA_ReadOnly)
         else:
@@ -855,7 +857,8 @@ class GDAL2Tiles(object):
           <DstNoDataReal>%i</DstNoDataReal>
           <DstNoDataImag>0</DstNoDataImag>
         </BandMapping>""" % (
-                            (i + 1), (i + 1), self.in_nodata[i], self.in_nodata[i]))  # Or rewrite to white by: , 255 ))
+                                (i + 1), (i + 1), self.in_nodata[i],
+                                self.in_nodata[i]))  # Or rewrite to white by: , 255 ))
                         # save the corrected VRT
                         open(tempfilename, "w").write(s)
                         # open by GDAL as self.out_ds
@@ -865,7 +868,7 @@ class GDAL2Tiles(object):
 
                         # set NODATA_VALUE metadata
                         self.out_ds.SetMetadataItem('NODATA_VALUES', '%i %i %i' % (
-                        self.in_nodata[0], self.in_nodata[1], self.in_nodata[2]))
+                            self.in_nodata[0], self.in_nodata[1], self.in_nodata[2]))
 
                         if self.options.verbose:
                             print("Modified warping result saved into 'tiles1.vrt'")
@@ -908,7 +911,7 @@ class GDAL2Tiles(object):
 
             if self.out_ds and self.options.verbose:
                 print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (
-                self.out_ds.RasterXSize, self.out_ds.RasterYSize, self.out_ds.RasterCount))
+                    self.out_ds.RasterXSize, self.out_ds.RasterYSize, self.out_ds.RasterCount))
 
         if not self.out_ds:
             self.out_ds = self.in_ds
@@ -931,7 +934,7 @@ class GDAL2Tiles(object):
         srs4326 = osr.SpatialReference()
         srs4326.ImportFromEPSG(4326)
         if self.out_srs and srs4326.ExportToProj4() == self.out_srs.ExportToProj4():
-            self.kml = True
+            self.kml = False
             self.isepsg4326 = True
             if self.options.verbose:
                 print("KML autotest OK!")
@@ -1075,7 +1078,7 @@ class GDAL2Tiles(object):
                 def rastertileswne(x, y, z):
                     pixelsizex = (2 ** (self.tmaxz - z) * self.out_gt[1])  # X-pixel size in level
                     pixelsizey = (
-                                2 ** (self.tmaxz - z) * self.out_gt[1])  # Y-pixel size in level (usually -1*pixelsizex)
+                            2 ** (self.tmaxz - z) * self.out_gt[1])  # Y-pixel size in level (usually -1*pixelsizex)
                     west = self.out_gt[0] + x * self.tilesize * pixelsizex
                     east = west + self.tilesize * pixelsizex
                     south = self.ominy + y * self.tilesize * pixelsizex
@@ -1213,7 +1216,7 @@ class GDAL2Tiles(object):
                 if self.stopped:
                     break
                 ti += 1
-                tilefilename = os.path.join(self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
+                tilefilename = os.path.join(self.output, str(tz), "%s_%s.%s" % (tx, ty, self.tileext))
                 if self.options.verbose:
                     print(ti, '/', tcount, tilefilename)  # , "( TileMapService: z / x / y )"
 
@@ -1321,7 +1324,7 @@ class GDAL2Tiles(object):
 
                 # Create a KML file for this tile.
                 if self.kml:
-                    kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
+                    kmlfilename = os.path.join(self.output, str(tz), '%d_%d.kml' % (tx, ty))
                     if not self.options.resume or not os.path.exists(kmlfilename):
                         f = open(kmlfilename, 'w')
                         f.write(self.generate_kml(tx, ty, tz))
@@ -1358,7 +1361,7 @@ class GDAL2Tiles(object):
                         break
 
                     ti += 1
-                    tilefilename = os.path.join(self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
+                    tilefilename = os.path.join(self.output, str(tz), "%s_%s.%s" % (tx, ty, self.tileext))
 
                     if self.options.verbose:
                         print(ti, '/', tcount, tilefilename)  # , "( TileMapService: z / x / y )"
@@ -1391,7 +1394,7 @@ class GDAL2Tiles(object):
                             minx, miny, maxx, maxy = self.tminmax[tz + 1]
                             if x >= minx and x <= maxx and y >= miny and y <= maxy:
                                 dsquerytile = gdal.Open(
-                                    os.path.join(self.output, str(tz + 1), str(x), "%s.%s" % (y, self.tileext)),
+                                    os.path.join(self.output, str(tz + 1), "%s_%s.%s" % (x, y, self.tileext)),
                                     gdal.GA_ReadOnly)
                                 if (ty == 0 and y == 1) or (ty != 0 and (y % (2 * ty)) != 0):
                                     tileposy = 0
@@ -1553,13 +1556,13 @@ class GDAL2Tiles(object):
         for z in range(self.tminz, self.tmaxz + 1):
             if self.options.profile == 'raster':
                 s += """        <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (
-                args['publishurl'], z, (2 ** (self.nativezoom - z) * self.out_gt[1]), z)
+                    args['publishurl'], z, (2 ** (self.nativezoom - z) * self.out_gt[1]), z)
             elif self.options.profile == 'mercator':
                 s += """        <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (
-                args['publishurl'], z, 156543.0339 / 2 ** z, z)
+                    args['publishurl'], z, 156543.0339 / 2 ** z, z)
             elif self.options.profile == 'geodetic':
                 s += """        <TileSet href="%s%d" units-per-pixel="%.14f" order="%d"/>\n""" % (
-                args['publishurl'], z, 0.703125 / 2 ** z, z)
+                    args['publishurl'], z, 0.703125 / 2 ** z, z)
         s += """      </TileSets>
     </TileMap>
     """
