@@ -18,14 +18,14 @@
     -fx-padding: 0;
 }
 
-#panelStand, #panelAdvance, #panelGoogle, #panelRaster {
+#panelStandard, #panelAdvance, #panelGoogle, #panelRaster {
     -fx-background-color: #ecf0f1,
     linear-gradient(to bottom, #ecf4fa 0%, #ced4d9 100%);
     -fx-background-insets: 0, 0 0 1 0;
     -fx-margin: 0 5 5 0;
 }
 
-#panelStand:hover, #panelAdvance:hover, #panelGoogle:hover, #panelRaster:hover {
+#panelStandard:hover, #panelAdvance:hover, #panelGoogle:hover, #panelRaster:hover {
     -fx-background-color: #bdc3c7;
 }
 
@@ -35,4 +35,20 @@
 
 .main-label-color {
     -fx-font-size: 18px;
+}
+
+#dataInfoPanel{
+    -fx-background-color: #ecf0f1;
+}
+
+.main-label-info{
+    -fx-font-size: 18px;
+    -fx-padding: 3 0 3 0;
+    -fx-font-weight: bold;
+    -fx-text-alignment: center;
+}
+
+.page-panel{
+    -fx-background-color: #ffffff;
+    -fx-border-color: #555555;
 }
