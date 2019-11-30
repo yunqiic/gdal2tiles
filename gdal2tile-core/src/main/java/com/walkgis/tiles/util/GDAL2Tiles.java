@@ -1,9 +1,5 @@
-package com.walkgis.tiles;
+package com.walkgis.tiles.util;
 
-import com.walkgis.tiles.util.GeopackageUtil;
-import com.walkgis.tiles.util.GlobalGeodetic;
-import com.walkgis.tiles.util.GlobalMercator;
-import com.walkgis.tiles.util.PDFReader;
 import mil.nga.geopackage.BoundingBox;
 import org.apache.commons.cli.*;
 import org.gdal.gdal.Band;

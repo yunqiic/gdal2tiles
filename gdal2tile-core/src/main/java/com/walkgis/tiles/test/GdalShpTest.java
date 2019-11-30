@@ -1,4 +1,4 @@
-package com.walkgis.tiles;
+package com.walkgis.tiles.test;
 
 import org.gdal.gdal.gdal;
 import org.gdal.ogr.DataSource;

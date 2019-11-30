@@ -10,7 +10,7 @@
 <?scenebuilder-background-color 0xdfdfdfff?>
 
 <VBox prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.MainController">
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.MainController">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
@@ -134,12 +134,12 @@
                                   prefWidth="570.0" style="-fx-border-color: #ecf0f1;"/>
                         <Label layoutX="617.0" layoutY="37.0" prefHeight="35.0" prefWidth="272.0"
                                styleClass="main-label-info" text="坐标系统"/>
-                        <Label layoutX="617.0" layoutY="72.0" prefHeight="31.0" prefWidth="272.0" text="EPSG:4326"/>
+                        <Label fx:id="projection" wrapText="true" layoutX="617.0" layoutY="72.0" prefHeight="31.0" prefWidth="272.0" text="EPSG:4326"/>
                         <Button layoutX="652.0" layoutY="103.0" mnemonicParsing="false" prefHeight="31.0"
                                 prefWidth="141.0" text="改变"/>
                         <Label layoutX="617.0" layoutY="136.0" prefHeight="35.0" prefWidth="278.0"
                                styleClass="main-label-info" text="坐标范围"/>
-                        <Label layoutX="617.0" layoutY="170.0" prefHeight="44.0" prefWidth="272.0"
+                        <Label fx:id="transform" layoutX="617.0" layoutY="170.0" prefHeight="44.0" prefWidth="272.0"
                                text="102.232323   0.000483    0&#10;24.2323232   0   -0.000483"/>
                         <Button layoutX="653.0" layoutY="214.0" mnemonicParsing="false" prefHeight="31.0"
                                 prefWidth="141.0" text="改变"/>
@@ -148,7 +148,7 @@
                                 prefWidth="108.0" text="打开文件"/>
                         <Button layoutX="175.0" layoutY="465.0" mnemonicParsing="false" prefHeight="34.0"
                                 prefWidth="72.0" text="删除"/>
-                        <Button layoutX="533.0" layoutY="461.0" mnemonicParsing="false" prefHeight="41.0"
+                        <Button fx:id="btnReview" layoutX="533.0" layoutY="461.0" mnemonicParsing="false" prefHeight="41.0"
                                 prefWidth="72.0" text="查看"/>
                         <Label layoutX="35.0" layoutY="45.0" prefHeight="35.0" prefWidth="570.0"
                                style="-fx-background-color: #3498db; -fx-alignment: center;"
@@ -162,7 +162,7 @@
                                   layoutY="115.0" prefHeight="315.0" prefWidth="656.0" vgap="20.0">
                             <children>
                                 <AnchorPane fx:id="panelStandard" minHeight="-Infinity" minWidth="-Infinity"
-                                            onMouseClicked="#showSelectDialog" prefHeight="-1.0" prefWidth="-1.0"
+                                            prefHeight="-1.0" prefWidth="-1.0"
                                             style="" GridPane.columnIndex="0" GridPane.rowIndex="0">
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0"
@@ -188,7 +188,7 @@
                                     </children>
                                 </AnchorPane>
                                 <AnchorPane fx:id="panelGoogle" minHeight="-Infinity" minWidth="-Infinity"
-                                            onMouseClicked="#showSelectDialog" prefHeight="148.0" prefWidth="292.0"
+                                            prefHeight="148.0" prefWidth="292.0"
                                             style="" GridPane.columnIndex="0" GridPane.rowIndex="1">
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0"
@@ -210,7 +210,7 @@
                                     </children>
                                 </AnchorPane>
                                 <AnchorPane fx:id="panelAdvance" minHeight="-Infinity" minWidth="-Infinity"
-                                            onMouseClicked="#showSelectDialog" prefHeight="148.0" prefWidth="292.0"
+                                            prefHeight="148.0" prefWidth="292.0"
                                             style="" GridPane.columnIndex="1" GridPane.rowIndex="0">
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0"
@@ -231,7 +231,7 @@
                                     </children>
                                 </AnchorPane>
                                 <AnchorPane fx:id="panelRaster" minHeight="-Infinity" minWidth="-Infinity"
-                                            onMouseClicked="#showSelectDialog" prefHeight="148.0" prefWidth="292.0"
+                                            prefHeight="148.0" prefWidth="292.0"
                                             style="" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0"
@@ -269,9 +269,9 @@
         <Pane prefHeight="94.0" prefWidth="900.0" VBox.vgrow="NEVER">
             <children>
                 <Button fx:id="btnProve" layoutX="621.0" layoutY="10.0" mnemonicParsing="false"
-                        onMouseClicked="#btnProveClick" prefHeight="41.0" prefWidth="86.0" text="上一步"/>
+                        prefHeight="41.0" prefWidth="86.0" text="上一步"/>
                 <Button fx:id="btnNext" layoutX="727.0" layoutY="10.0" mnemonicParsing="false"
-                        onMouseClicked="#btnNextClick" prefHeight="41.0" prefWidth="86.0" text="下一步"/>
+                        prefHeight="41.0" prefWidth="86.0" text="下一步"/>
             </children>
         </Pane>
     </children>
