@@ -89,14 +89,12 @@ public class GDAL2Tiles {
         //generate_openlayers();
     }
 
-
     public void error(String msg, String details) {
         if (details != null) {
             System.out.println(msg + "\n\n" + details);
         } else
             System.out.println(msg);
     }
-
 
     public void progressbar(double complete) {
         System.out.println("complete:" + complete);
@@ -106,14 +104,12 @@ public class GDAL2Tiles {
         this.stopped = true;
     }
 
-
     private String gettempfilename(String suffix) {
         String tmpdir = System.getProperty("java.io.tmpdir");
         int d = 0 + (int) (Math.random() * (1000000000 - 0 + 1));
         String random_part = String.format("file%d", d);
         return tmpdir + File.separator + random_part + suffix;
     }
-
 
     //-l -p raster -z 0-5 -w none <image> <tilesdir>
     public GDAL2Tiles() throws Exception {
@@ -236,9 +232,10 @@ public class GDAL2Tiles {
         this.out_srs = in_srs;
 
         if (this.profile == null) {
-            this.profile = EnumProfile.geodetic;
             String s = in_srs.GetAuthorityCode(null);
-            int xx = in_srs.AutoIdentifyEPSG();
+            if (s.equals("4326")) this.profile = EnumProfile.geodetic;
+            else if (s.equals("900913")) this.profile = EnumProfile.mercator;
+            else this.profile = EnumProfile.geodetic;
         }
 
         if (this.profile == EnumProfile.mercator)
@@ -248,7 +245,6 @@ public class GDAL2Tiles {
         else this.out_srs = in_srs;
 
         this.out_ds = null;
-
 
         if (this.out_ds == null) {
             this.out_ds = this.in_ds;
