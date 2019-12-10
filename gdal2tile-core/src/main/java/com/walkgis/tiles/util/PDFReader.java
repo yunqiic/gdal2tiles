@@ -1,10 +1,8 @@
 package com.walkgis.tiles.util;
 
 import org.gdal.gdal.Dataset;
-import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconstConstants;
-import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
 import org.locationtech.jts.geom.Envelope;
 
@@ -15,17 +13,10 @@ public class PDFReader {
     private int height;
     private Dataset dataset;
 
-    public void init(String file, String imgSavePath) {
-        // 注册所有的驱动
-        ogr.RegisterAll();
-        // 为了支持中文路径，请添加下面这句代码
-        gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
-        // 为了使属性表字段支持中文，请添加下面这句
-        gdal.SetConfigOption("SHAPE_ENCODING", "");
-
+    public void init(String file) throws Exception {
         this.dataset = gdal.Open(file, gdalconstConstants.GA_ReadOnly);
         if (dataset == null) {
-            System.out.println("GDAL read error: " + gdal.GetLastErrorMsg());
+            throw new Exception("GDAL read error: " + gdal.GetLastErrorMsg());
         }
 
         this.width = dataset.getRasterXSize();
@@ -55,7 +46,6 @@ public class PDFReader {
         this.envelope = new Envelope(ulCoord[0], brCoord[0], ulCoord[1], brCoord[1]);
 
         this.spatialReference = new SpatialReference(dataset.GetProjection());
-
     }
 
     public int[] getBandList(int bandCount) {

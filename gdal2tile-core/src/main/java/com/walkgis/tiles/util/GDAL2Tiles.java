@@ -11,8 +11,11 @@ import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
+
 import java.io.*;
 import java.sql.SQLException;
 import java.util.*;
@@ -31,35 +34,29 @@ public class GDAL2Tiles {
     private String tileext = "png";
     private boolean scaledquery = true;
     private int querysize = 4 * tilesize;
-    private int resampling = -1;
+    private EnumResampling resampling = EnumResampling.GRA_Average;
     private int tminz = -1, tmaxz = -1;
     private double ominx, ominy, omaxx, omaxy;
-    private String profile;
     private double[] swne;
-    //    private GeomEnvelop tileswne;
     private List<int[]> tminmax;
     private double[] out_gt;
     private int nativezoom = -1;
     private double[] tsize;
-
-    private Coordinate leftTop;
-    private Coordinate rightBottom;
-    private double widthResolution;
-    private double heightResolution;
-    private SpatialReference referenceSystem;
-    private Map<String, String> options;
+    //    private Map<String, String> options;
     private String input;
     private String output;
     private Dataset in_ds, out_ds;
     private Band alphaband;
     private SpatialReference out_srs;
+    private EnumProfile profile;
+    private Boolean resume = false;
     private Driver out_drv, mem_drv;
     private GlobalMercator mercator;
     private GlobalGeodetic geodetic;
     private int dataBandsCount;
     private boolean kml;
 
-    private String[] args;
+    //    private String[] args;
     private Options parser;
     private int[] tileswne;
     private int[] in_nodata;
@@ -70,8 +67,13 @@ public class GDAL2Tiles {
     private int byteToType = 0;
     private GeopackageUtil geopackageUtil;
 
-    public void process(GeopackageUtil geopackageUtil) throws IOException, SQLException {
+    public void process(GeopackageUtil geopackageUtil) throws Exception {
         // Opening and preprocessing of the input file
+        if (StringUtils.isEmpty(this.input))
+            throw new Exception("No input file specified");
+        if (StringUtils.isEmpty(this.output))
+            throw new Exception("No output file specified");
+
         this.geopackageUtil = geopackageUtil;
         open_input();
 
@@ -97,7 +99,7 @@ public class GDAL2Tiles {
 
 
     public void progressbar(double complete) {
-        //System.out.println("complete:" + complete);
+        System.out.println("complete:" + complete);
     }
 
     public void stop() {
@@ -114,16 +116,7 @@ public class GDAL2Tiles {
 
 
     //-l -p raster -z 0-5 -w none <image> <tilesdir>
-    public GDAL2Tiles(String[] args) {
-        gdal.AllRegister();
-        // 注册所有的驱动
-        ogr.RegisterAll();
-        // 为了支持中文路径，请添加下面这句代码
-        gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
-        // 为了使属性表字段支持中文，请添加下面这句
-        gdal.SetConfigOption("SHAPE_ENCODING", "");
-        gdal.SetConfigOption("GDAL_DATA", "\\gdal-data");
-
+    public GDAL2Tiles() throws Exception {
         this.stopped = false;
         this.input = null;
         this.output = null;
@@ -135,7 +128,6 @@ public class GDAL2Tiles {
         this.scaledquery = true;
         this.querysize = 4 * this.tilesize;
         this.overviewquery = false;
-
 
         this.out_drv = null;
         this.mem_drv = null;
@@ -159,67 +151,14 @@ public class GDAL2Tiles {
         this.input = null;
         this.output = null;
 
-        this.tilesize = 256;
-//        this.tiledriver = "PNG";
-        this.tileext = "png";
+//        optparse_init();
 
-        this.scaledquery = true;
-        this.querysize = 4 * this.tilesize;
-//        this.overviewquery = false;
-
-        optparse_init();
-
-        this.options = parse_options(args);
-        this.args = parse_args(args);
-        if (args.length <= 0) {
-            error("No input file specified", null);
-        }
-
-
-        if (new File(args[args.length - 1]).isDirectory() ||
-                (args.length > 0 && !new File(args[args.length - 1]).exists())) {
-            this.output = args[args.length - 1];
-            this.args = new String[]{args[args.length - 2]};
-        }
-
-        //多个输入
-        if (this.args.length > 1) {
-            error("", null);
-        }
-
-        this.input = this.args[0];
-
-        if (!this.options.containsKey("title")) {
-            this.options.put("title", new File(this.input).getName());
-        }
-        if (this.options.containsKey("url") && this.options.get("url").endsWith("/")) {
-            this.options.put("url", this.options.get("url") + "/");
-        }
-        if (!this.options.containsKey("url")) {
-            this.options.put("url", this.options.get("url") + new File(this.output).getPath() + "/");
-        }
-
-        this.resampling = -1;
-
-        if (this.options.get("resampling").equalsIgnoreCase("average")) {
-        } else if (this.options.get("resampling").equalsIgnoreCase("antialias")) {
-        } else if (this.options.get("resampling").equalsIgnoreCase("near")) {
-            this.resampling = gdalconst.GRA_NearestNeighbour;
-            this.querysize = this.tilesize;
-        } else if (this.options.get("resampling").equalsIgnoreCase("bilinear")) {
-            this.resampling = gdalconst.GRA_Bilinear;
-            this.querysize = this.tilesize * 2;
-        } else if (this.options.get("resampling").equalsIgnoreCase("cubic")) {
-            this.resampling = gdalconst.GRA_Cubic;
-        } else if (this.options.get("resampling").equalsIgnoreCase("cubicspline")) {
-            this.resampling = gdalconst.GRA_CubicSpline;
-        } else if (this.options.get("resampling").equalsIgnoreCase("lanczos")) {
-            this.resampling = gdalconst.GRA_Lanczos;
-        }
+//        this.options = parse_options(args);
+//        this.args = parse_args(args);
+        this.resampling = EnumResampling.GRA_Average;
 
         this.tminz = -1;
         this.tmaxz = -1;
-
 //
 //        if (this.options.containsKey("zoom")) {
 //            String[] minmax = this.options.get("zoom").split("-");
@@ -229,13 +168,7 @@ public class GDAL2Tiles {
 //            } else this.tmaxz = this.tminz;
 //        }
 
-        this.kml = Boolean.parseBoolean(this.options.get("kml"));
-
-        if (Boolean.parseBoolean(this.options.get("verbose"))) {
-            System.out.println("Options:" + options);
-            System.out.println("Input:" + input);
-            System.out.println("Output:" + output);
-        }
+        this.kml = false;
     }
 
     private void optparse_init() {
@@ -268,23 +201,49 @@ public class GDAL2Tiles {
         this.parser = p;
     }
 
-    private void open_input() {
+    private void open_input() throws Exception {
         this.out_drv = gdal.GetDriverByName(this.tiledriver);
         this.mem_drv = gdal.GetDriverByName("MEM");
 
         if (new File(this.input).exists()) {
-            reader.init(this.input, this.output);
+            reader.init(this.input);
             this.in_ds = reader.getDataset();
         }
 
-        in_nodata = new int[]{};
+//        # Get NODATA value
+//        self.in_nodata = []
+//        for i in range(1, self.in_ds.RasterCount + 1):
+//        if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
+//        self.in_nodata.append(self.in_ds.GetRasterBand(i).GetNoDataValue())
+//        if self.options.srcnodata:
+//        nds = list(map(float, self.options.srcnodata.split(',')))
+//        if len(nds) < self.in_ds.RasterCount:
+//        self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
+//            else:
+//        self.in_nodata = nds
+        this.in_nodata = new int[]{};
+//        for (int i = 1, size = this.in_ds.GetRasterCount(); i <= size; i++) {
+//            Double[] nodDate = new Double[size];
+//            this.in_ds.GetRasterBand(i).GetNoDataValue(nodDate);
+//            if ( nodDate!= null) {
+//
+//            }
+//        }
+
+
         SpatialReference in_srs = reader.getSpatialReference();
         //初始化in_nodata
         this.out_srs = in_srs;
 
-        if (this.options.get("profile").equalsIgnoreCase("mercator"))
+        if (this.profile == null) {
+            this.profile = EnumProfile.geodetic;
+            String s = in_srs.GetAuthorityCode(null);
+            int xx = in_srs.AutoIdentifyEPSG();
+        }
+
+        if (this.profile == EnumProfile.mercator)
             this.out_srs.ImportFromEPSG(900913);
-        else if (this.options.get("profile").equalsIgnoreCase("geodetic"))
+        else if (this.profile == EnumProfile.geodetic)
             this.out_srs.ImportFromEPSG(4326);
         else this.out_srs = in_srs;
 
@@ -323,7 +282,7 @@ public class GDAL2Tiles {
         this.omaxy = out_gt[3];
         this.ominy = out_gt[3] - this.out_ds.getRasterYSize() * this.out_gt[1];
 
-        if (this.options.get("profile").equals("mercator")) {
+        if (this.profile == EnumProfile.mercator) {
             this.mercator = new GlobalMercator(256);
 //            this.tileswne = this.mercator.tileLatLonBounds();
             this.tminmax = new LinkedList<>();
@@ -343,7 +302,7 @@ public class GDAL2Tiles {
             if (this.tmaxz == -1) {
                 this.tmaxz = this.mercator.zoomForPixelSize(this.out_gt[1]);
             }
-        } else if (this.options.get("profile").equals("geodetic")) {
+        } else if (this.profile == EnumProfile.geodetic) {
             this.geodetic = new GlobalGeodetic(null, 256);
 //            this.tileswne = this.geodetic.tileLatLonBounds();
             this.tminmax = new LinkedList<>();
@@ -365,7 +324,7 @@ public class GDAL2Tiles {
             if (this.tmaxz == -1) {
                 this.tmaxz = this.geodetic.zoomForPixelSize(this.out_gt[1]);
             }
-        } else if (this.options.get("profile").equals("raster")) {
+        } else if (this.profile == EnumProfile.raster) {
             this.nativezoom = (int) (Math.max(Math.ceil(log2(this.out_ds.getRasterXSize() / (float) (this.tilesize))),
                     Math.ceil(log2(this.out_ds.getRasterYSize() / (float) (this.tilesize)))));
 
@@ -410,7 +369,7 @@ public class GDAL2Tiles {
         }
         double[] southWest = new double[2];
         double[] northEast = new double[2];
-        if (this.options.get("profile").equals("mercator")) {
+        if (this.profile == EnumProfile.mercator) {
             southWest = this.mercator.metersToLatLon(this.ominx, this.ominy);
             northEast = this.mercator.metersToLatLon(this.omaxx, this.omaxy);
 
@@ -424,7 +383,7 @@ public class GDAL2Tiles {
 //                f.write(self.generate_openlayers())
 //                f.close()
 
-        } else if (this.options.get("profile").equals("geodetic")) {
+        } else if (this.profile == EnumProfile.geodetic) {
             southWest = new double[]{this.ominy, this.ominx};
             northEast = new double[]{this.omaxy, this.omaxx};
 
@@ -437,7 +396,7 @@ public class GDAL2Tiles {
 //                f = open(os.path.join(self.output, 'openlayers.html'), 'w')
 //                f.write(self.generate_openlayers())
 //                f.close()
-        } else if (this.options.get("profile").equals("raster")) {
+        } else if (this.profile == EnumProfile.raster) {
 
             southWest = new double[]{this.ominy, this.ominx};
             northEast = new double[]{this.omaxy, this.omaxx};
@@ -451,12 +410,12 @@ public class GDAL2Tiles {
         }
         // Generate tilemapresource.xml.
 
-        if (this.options.containsKey("resume") && !new File(this.output + File.separator + "tilemapresource.xml").exists()) {
+        if (this.resume && !new File(this.output + File.separator + "tilemapresource.xml").exists()) {
             File file = new File(this.output + File.separator + "tilemapresource.xml");
             FileOutputStream fileOutputStream = null;
             try {
                 fileOutputStream = new FileOutputStream(file);
-                fileOutputStream.write(generate_tilemapresource().getBytes());
+//                fileOutputStream.write(generate_tilemapresource().getBytes());
                 fileOutputStream.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -498,7 +457,7 @@ public class GDAL2Tiles {
 
                 String tilefilename = this.output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, this.tileext);
 
-                if (Boolean.parseBoolean(this.options.get("resume")) && new File(tilefilename).exists()) {
+                if (this.resume && new File(tilefilename).exists()) {
                     progressbar(ti / (float) tcount);
                     continue;
                 }
@@ -508,15 +467,15 @@ public class GDAL2Tiles {
                 }
 
                 double[] b = null;
-                if (this.options.get("profile").equals("mercator")) {
+                if (this.profile == EnumProfile.mercator) {
                     b = this.mercator.tileBounds(tx, ty, tz);
-                } else if (this.options.get("profile").equals("geodetic")) {
+                } else if (this.profile == EnumProfile.geodetic) {
                     b = this.geodetic.tileBounds(tx, ty, tz);
                 }
 
                 int rx = 0, ry = 0, rxsize = 0, rysize = 0, wx = 0, wy = 0, wxsize = 0, wysize = 0;
 
-                if (this.options.get("profile").equals("mercator") || this.options.get("profile").equals("geodetic")) {
+                if (this.profile == EnumProfile.mercator || this.profile == EnumProfile.geodetic) {
                     int[][] rbwb = this.geo_query(ds, b[0], b[3], b[2], b[1], 0);
 
                     rbwb = this.geo_query(ds, b[0], b[3], b[2], b[1], querysize);
@@ -529,7 +488,7 @@ public class GDAL2Tiles {
                     wy = rbwb[1][1];
                     wxsize = rbwb[1][2];
                     wysize = rbwb[1][3];
-                } else if (this.options.get("profile").equals("raster")) {
+                } else if (this.profile == EnumProfile.raster) {
                     int tsize = (int) this.tsize[tz];//tilesize in raster coordinates for actual zoom
                     int xsize = this.out_ds.getRasterXSize();//size of the raster in pixels
                     int ysize = this.out_ds.getRasterYSize();
@@ -582,7 +541,8 @@ public class GDAL2Tiles {
 
                     dsquery.delete();
                 }
-                if (!this.options.get("resampling").equals("antialias")) {
+                //antialias
+                if (this.resampling != EnumResampling.Other) {
                     try {
                         this.out_drv.CreateCopy(tilefilename, dstile, 0);
                         if (geopackage)
@@ -592,9 +552,9 @@ public class GDAL2Tiles {
                     }
                 }
 
-                if (!Boolean.parseBoolean(this.options.get("verbose")) && !Boolean.parseBoolean(this.options.get("quiet"))) {
-                    this.progressbar(ti / (double) tcount);
-                }
+//                if (!Boolean.parseBoolean(this.options.get("verbose")) && !Boolean.parseBoolean(this.options.get("quiet"))) {
+                this.progressbar(ti / (double) tcount);
+//                }
             }
         }
 
@@ -626,7 +586,7 @@ public class GDAL2Tiles {
                     String tilefilename = this.output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, this.tileext);
 
 
-                    if (Boolean.parseBoolean(this.options.get("resume")) && new File(tilefilename).exists()) {
+                    if (this.resume && new File(tilefilename).exists()) {
                         progressbar(ti / (float) tcount);
                         continue;
                     }
@@ -672,13 +632,14 @@ public class GDAL2Tiles {
 
                     scale_query_to_tile(dsquery, dstile, tilefilename);
 
-                    if (!this.options.get("resampling").equals("antialias")) {
+                    //antialias
+                    if (this.resampling != EnumResampling.Other) {
                         this.out_drv.CreateCopy(tilefilename, dstile, 0);
                     }
 
-                    if (!Boolean.parseBoolean(this.options.get("verbose")) && !Boolean.parseBoolean(this.options.get("quiet"))) {
-                        this.progressbar(ti / (double) tcount);
-                    }
+//                    if (!Boolean.parseBoolean(this.options.get("verbose")) && !Boolean.parseBoolean(this.options.get("quiet"))) {
+//                        this.progressbar(ti / (double) tcount);
+//                    }
                 }
             }
             if (geopackage)
@@ -693,13 +654,13 @@ public class GDAL2Tiles {
         int tilesize = dstile.getRasterXSize();
         int tilebands = dstile.getRasterCount();
 
-        if (this.options.get("resampling").equals("average")) {
+        if (this.resampling == EnumResampling.GRA_Average) {
             for (int i = 1; i <= tilebands; i++) {
                 int res = gdal.RegenerateOverview(dsquery.GetRasterBand(i), dstile.GetRasterBand(i), "average");
                 if (res != 0)
                     logger.error(String.format("RegenerateOverview() failed on %s, error %d", tilefilename, res));
             }
-        } else if (this.options.get("resampling").equals("antialias")) {
+        } else if (this.resampling == EnumResampling.Other) {//antialias
 //            # Scaling by PIL (Python Imaging Library) - improved Lanczos
 //            array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
 //            for i in range(tilebands):
@@ -713,7 +674,7 @@ public class GDAL2Tiles {
         } else {
             dsquery.SetGeoTransform(new double[]{0.0, tilesize / (double) querysize, 0.0, 0.0, 0.0, tilesize / (double) querysize});
             dstile.SetGeoTransform(new double[]{0.0, 1.0, 0.0, 0.0, 0.0, 1.0});
-            int res = gdal.ReprojectImage(dsquery, dstile, null, null, this.resampling);
+            int res = gdal.ReprojectImage(dsquery, dstile, null, null, this.resampling.getValue());
             if (res != 0)
                 logger.error("ReprojectImage() failed on %s, error %d", tilefilename, res);
         }
@@ -763,45 +724,6 @@ public class GDAL2Tiles {
             rysize = ds.getRasterYSize() - ry;
         }
         return new int[][]{new int[]{rx, ry, rxsize, rysize}, new int[]{wx, wy, wxsize, wysize}};
-    }
-
-    /**
-     * 输出XML配置文件
-     */
-    private String generate_tilemapresource() {
-        Map<String, String> args = new HashMap<>();
-        args.put("title", this.options.get("title"));
-        args.put("south", String.valueOf(this.swne[0]));
-        args.put("west", String.valueOf(this.swne[1]));
-        args.put("north", String.valueOf(this.swne[2]));
-        args.put("east", String.valueOf(this.swne[3]));
-
-        args.put("titlesize", String.valueOf(this.tilesize));
-        args.put("tileformat", this.tileext);
-        args.put("publishurl", this.options.get("url"));
-        args.put("profile", this.options.get("profile"));
-
-        if (this.out_srs != null) {
-//            args.put("src", this.out_srs.toWKT());
-            args.put("src", this.out_srs.toString());
-        } else args.put("src", "");
-
-        String s = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                "    <TileMap version=\"1.0.0\" tilemapservice=\"http://tms.osgeo.org/1.0.0\">\n" +
-                "      <Title>%(title)s</Title>\n" +
-                "      <Abstract></Abstract>\n" +
-                "      <SRS>%(srs)s</SRS>\n" +
-                "      <BoundingBox minx=\"%(west).14f\" miny=\"%(south).14f\" maxx=\"%(east).14f\" maxy=\"%(north).14f\"/>\n" +
-                "      <Origin x=\"%(west).14f\" y=\"%(south).14f\"/>\n" +
-                "      <TileFormat width=\"%(tilesize)d\" height=\"%(tilesize)d\" mime-type=\"image/%(tileformat)s\" extension=\"%(tileformat)s\"/>\n" +
-                "      <TileSets profile=\"%(profile)s\">";
-
-//        for (int z = this.tminz; z < this.tmaxz + 1; z++) {
-//            s += String.format("<TileSet href=\"%s%d\" units-per-pixel=\"%.14f\" order=\"%d\"/>\\n", args.get("publishurl"), z, (Math.pow(2, (this.nativezoom - z)) * this.out_gt[1]), z);
-//        }
-        s += "      </TileSets>\n" +
-                "    </TileMap>";
-        return s;
     }
 
     private void generate_openlayers() {
@@ -985,7 +907,7 @@ public class GDAL2Tiles {
 
     private BoundingBox getBoundBox() {
         Envelope envelope = reader.getEnvelope();
-        if (this.options.get("profile").equals("mercator")) {
+        if (this.profile == EnumProfile.mercator) {
             envelope = reader.getEnvelope();
             double[] min = lonLat2Mercator(envelope.getMinX(), envelope.getMinY());
             double[] max = lonLat2Mercator(envelope.getMaxX(), envelope.getMaxY());
@@ -1047,5 +969,46 @@ public class GDAL2Tiles {
         if (!options.containsKey("bingkey"))
             options.put("bingkey", "INSERT_YOUR_KEY_HERE");
         return options;
+    }
+
+    public EnumResampling getResampling() {
+        return resampling;
+    }
+
+    public void setResampling(EnumResampling resampling) {
+        if (resampling == EnumResampling.Other) {
+        } else if (resampling == EnumResampling.GRA_NearestNeighbour) {
+            this.resampling = Enum.valueOf(EnumResampling.class, String.valueOf(gdalconst.GRA_NearestNeighbour));
+            this.querysize = this.tilesize;
+        } else if (resampling == EnumResampling.GRA_Bilinear) {
+            this.resampling = Enum.valueOf(EnumResampling.class, String.valueOf(gdalconst.GRA_Bilinear));
+            this.querysize = this.tilesize * 2;
+        } else if (resampling == EnumResampling.GRA_Cubic)
+            this.resampling = Enum.valueOf(EnumResampling.class, String.valueOf(gdalconst.GRA_Cubic));
+        else if (resampling == EnumResampling.GRA_CubicSpline)
+            this.resampling = Enum.valueOf(EnumResampling.class, String.valueOf(gdalconst.GRA_CubicSpline));
+        else if (resampling == EnumResampling.GRA_Lanczos)
+            this.resampling = Enum.valueOf(EnumResampling.class, String.valueOf(gdalconst.GRA_Lanczos));
+        this.resampling = resampling;
+    }
+
+    public String getInput() {
+        return input;
+    }
+
+    public void setInput(String input) {
+        this.input = input;
+    }
+
+    public String getOutput() {
+        return output;
+    }
+
+    public void setOutput(String output) {
+        this.output = output;
+    }
+
+    public void setProfile(EnumProfile profile) {
+        this.profile = profile;
     }
 }
