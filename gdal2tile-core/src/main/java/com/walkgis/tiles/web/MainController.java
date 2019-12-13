@@ -181,7 +181,7 @@ public class MainController implements Initializable {
             gdal2tiles.setInput(fileInput.getAbsolutePath());
             gdal2tiles.setOutput(fileOutput.getAbsolutePath());
             gdal2tiles.setResampling(EnumResampling.GRA_Average);
-            gdal2tiles.setProfile(EnumProfile.geodetic);
+            gdal2tiles.setProfile(EnumProfile.mercator);
             gdal2tiles.process(null);
         } catch (IOException e) {
             e.printStackTrace();

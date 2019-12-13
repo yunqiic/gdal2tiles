@@ -9,11 +9,14 @@ import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 import org.gdal.ogr.ogr;
 import org.gdal.osr.SpatialReference;
+import org.gdal.osr.osr;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.*;
@@ -59,13 +62,14 @@ public class GDAL2Tiles {
     //    private String[] args;
     private Options parser;
     private int[] tileswne;
-    private int[] in_nodata;
+    private List<Double> in_nodata;
     private String tiledriver = "";
     private boolean overviewquery = false;
     public static boolean geopackage = false;
     private int dataType = 1;
     private int byteToType = 0;
     private GeopackageUtil geopackageUtil;
+    private String s_srs;
 
     public void process(GeopackageUtil geopackageUtil) throws Exception {
         // Opening and preprocessing of the input file
@@ -206,30 +210,35 @@ public class GDAL2Tiles {
             this.in_ds = reader.getDataset();
         }
 
-//        # Get NODATA value
-//        self.in_nodata = []
-//        for i in range(1, self.in_ds.RasterCount + 1):
-//        if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
-//        self.in_nodata.append(self.in_ds.GetRasterBand(i).GetNoDataValue())
-//        if self.options.srcnodata:
-//        nds = list(map(float, self.options.srcnodata.split(',')))
-//        if len(nds) < self.in_ds.RasterCount:
-//        self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
-//            else:
-//        self.in_nodata = nds
-        this.in_nodata = new int[]{};
-//        for (int i = 1, size = this.in_ds.GetRasterCount(); i <= size; i++) {
-//            Double[] nodDate = new Double[size];
-//            this.in_ds.GetRasterBand(i).GetNoDataValue(nodDate);
-//            if ( nodDate!= null) {
-//
-//            }
-//        }
-
-
-        SpatialReference in_srs = reader.getSpatialReference();
         //初始化in_nodata
-        this.out_srs = in_srs;
+        this.in_nodata = new ArrayList<>();
+        for (int i = 1, size = this.in_ds.GetRasterCount() + 1; i < size; i++) {
+            Double[] noData = new Double[1];
+            this.in_ds.GetRasterBand(i).GetNoDataValue(noData);
+            if (noData != null) {
+                this.in_nodata.add(noData[0]);
+            }
+        }
+
+
+        SpatialReference in_srs = null;
+        String in_srs_wkt = null;
+        if (!StringUtils.isEmpty(this.s_srs)) {
+            in_srs = new SpatialReference();
+            in_srs.SetFromUserInput(this.s_srs);
+            in_srs_wkt = in_srs.ExportToWkt();
+        } else {
+            in_srs_wkt = this.in_ds.GetProjection();
+            if (StringUtils.isEmpty(in_srs_wkt) && this.in_ds.GetGCPCount() != 0) {
+                in_srs_wkt = this.in_ds.GetGCPProjection();
+            }
+            if (!StringUtils.isEmpty(in_srs_wkt)) {
+                in_srs = new SpatialReference();
+                in_srs.ImportFromWkt(in_srs_wkt);
+            }
+        }
+
+        this.out_srs = new SpatialReference();
 
         if (this.profile == null) {
             String s = in_srs.GetAuthorityCode(null);
@@ -245,6 +254,49 @@ public class GDAL2Tiles {
         else this.out_srs = in_srs;
 
         this.out_ds = null;
+
+        if (this.profile == EnumProfile.geodetic || this.profile == EnumProfile.mercator) {
+            double[] trans = this.in_ds.GetGeoTransform();
+            if (trans[0] == 0.0 && trans[1] == 1.0 && trans[2] == 0.0 && trans[3] == 0.0 &&
+                    trans[4] == 0.0 && trans[5] == 1.0) {
+                throw new Exception("There is no georeference - neither affine transformation (worldfile) nor GCPs. You can generate only 'raster' profile tiles.\n");
+            }
+            if (in_srs != null) {
+                if (in_srs.ExportToProj4() != this.out_srs.ExportToProj4() || this.in_ds.GetGCPCount() != 0) {
+                    this.out_ds = gdal.AutoCreateWarpedVRT(this.in_ds, in_srs_wkt, this.out_srs.ExportToWkt());
+                }
+            }
+            if (this.in_nodata != null && this.in_nodata.size() > 0) {
+                File tempfilename = File.createTempFile("-gdal2tiles", ".vrt");
+                this.out_ds.GetDriver().CreateCopy(tempfilename.getAbsolutePath(), this.out_ds);
+
+                String s = FileCopyUtils.copyToString(new FileReader(tempfilename));
+                s = s.replace("<GDALWarpOptions>", "<GDALWarpOptions><Option name=\"INIT_DEST\">NO_DATA</Option><Option name=\"UNIFIED_SRC_NODATA\">YES</Option>");
+                for (int i = 0; i < this.in_nodata.size(); i++) {
+                    s = s.replace(
+                            String.format("<BandMapping src=\"%i\" dst=\"%i\"/>", i + 1, i + 1),
+                            String.format("<BandMapping src=\"%i\" dst=\"%i\"><SrcNoDataReal>%i</SrcNoDataReal><SrcNoDataImag>0</SrcNoDataImag><DstNoDataReal>%i</DstNoDataReal><DstNoDataImag>0</DstNoDataImag></BandMapping>", i + 1, i + 1, this.in_nodata.get(i), this.in_nodata.get(i))
+                    );
+                }
+
+                FileCopyUtils.copy(s, new FileWriter(tempfilename));
+                this.out_ds = gdal.Open(tempfilename.getAbsolutePath(), gdalconst.GA_ReadOnly);
+                this.out_ds.SetMetadataItem("NODATA_VALUES", String.format("%i %i %i", this.in_nodata.get(0), this.in_nodata.get(1), this.in_nodata.get(2)));
+            }
+
+            if ((this.in_nodata == null || this.in_nodata.size() == 0) && this.out_ds.GetRasterCount() == 3) {
+                File tempfilename = File.createTempFile("-gdal2tiles", ".vrt");
+                this.out_ds.GetDriver().CreateCopy(tempfilename.getAbsolutePath(), this.out_ds);
+
+                String s = FileCopyUtils.copyToString(new FileReader(tempfilename));
+                s = s.replace("<BlockXSize>", String.format("<VRTRasterBand dataType=\"Byte\" band=\"%i\" subClass=\"VRTWarpedRasterBand\"><ColorInterp>Alpha</ColorInterp></VRTRasterBand><BlockXSize>", (this.out_ds.GetRasterCount() + 1)));
+                s = s.replace("</GDALWarpOptions>", String.format("<DstAlphaBand>%i</DstAlphaBand></GDALWarpOptions>", this.out_ds.GetRasterCount() + 1));
+                s = s.replace("</WorkingDataType>", "</WorkingDataType><Option name=\"INIT_DEST\">0</Option>");
+
+                FileCopyUtils.copy(s, new FileWriter(tempfilename));
+                this.out_ds = gdal.Open(tempfilename.getAbsolutePath(), gdalconst.GA_ReadOnly);
+            }
+        }
 
         if (this.out_ds == null) {
             this.out_ds = this.in_ds;
@@ -720,181 +772,6 @@ public class GDAL2Tiles {
             rysize = ds.getRasterYSize() - ry;
         }
         return new int[][]{new int[]{rx, ry, rxsize, rysize}, new int[]{wx, wy, wxsize, wysize}};
-    }
-
-    private void generate_openlayers() {
-        String html = "" +
-                "<!DOCTYPE html>\n" +
-                "<html lang=\"en\">\n" +
-                "<head>\n" +
-                "    <meta charset=\"UTF-8\">\n" +
-                "    <meta http-equiv='imagetoolbar' content='no'/>\n" +
-                "    <title>Title</title>\n" +
-                "    <style type=\"text/css\">\n" +
-                "        html, body {\n" +
-                "            overflow: hidden;\n" +
-                "            padding: 0;\n" +
-                "            height: 100%;\n" +
-                "            width: 100%;\n" +
-                "            font-family: 'Lucida Grande', Geneva, Arial, Verdana, sans-serif;\n" +
-                "        }\n" +
-                "\n" +
-                "        body {\n" +
-                "            margin: 10px;\n" +
-                "            background: #fff;\n" +
-                "        }\n" +
-                "\n" +
-                "        h1 {\n" +
-                "            margin: 0;\n" +
-                "            padding: 6px;\n" +
-                "            border: 0;\n" +
-                "            font-size: 20pt;\n" +
-                "        }\n" +
-                "\n" +
-                "        #header {\n" +
-                "            height: 43px;\n" +
-                "            padding: 0;\n" +
-                "            background-color: #eee;\n" +
-                "            border: 1px solid #888;\n" +
-                "        }\n" +
-                "\n" +
-                "        #subheader {\n" +
-                "            height: 12px;\n" +
-                "            text-align: right;\n" +
-                "            font-size: 10px;\n" +
-                "            color: #555;\n" +
-                "        }\n" +
-                "\n" +
-                "        #map {\n" +
-                "            height: 95%;\n" +
-                "            border: 1px solid #888;\n" +
-                "        }\n" +
-                "\n" +
-                "        .olImageLoadError {\n" +
-                "            display: none;\n" +
-                "        }\n" +
-                "\n" +
-                "        .olControlLayerSwitcher .layersDiv {\n" +
-                "            border-radius: 10px 0 0 10px;\n" +
-                "        }\n" +
-                "    </style>\n" +
-                "    <script src=\"http://www.openlayers.org/api/2.12/OpenLayers.js\"></script>" +
-                "";
-        html += "<script>\n" +
-                "        var map;\n" +
-                "        var mapBounds = new OpenLayers.Bounds(" + this.swne[0] + ", " + this.swne[1] + ", " + this.swne[2] + ", " + this.swne[3] + ");\n" +
-                "        var mapMinZoom = " + this.tminz + ";\n" +
-                "        var mapMaxZoom = " + this.tmaxz + ";\n" +
-                "        var emptyTileURL = \"http://www.maptiler.org/img/none.png\";\n" +
-                "        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;\n" +
-                "\n" +
-                "        function init() {\n" +
-                "            var options = {\n" +
-                "                div: \"map\",\n" +
-                "                controls: [],\n" +
-                "                maxExtent: new OpenLayers.Bounds(" + this.swne[0] + ", " + this.swne[1] + ", " + this.swne[2] + ", " + this.swne[3] + "),\n" +
-                "                maxResolution: " + (Math.pow(2, this.nativezoom) * this.out_gt[1]) + ",\n" +
-                "                numZoomLevels: " + (this.tmaxz + 1) + "\n" +
-                "            };\n" +
-                "            map = new OpenLayers.Map(options);\n" +
-                "\n" +
-                "            var layer = new OpenLayers.Layer.TMS(\"TMS Layer\", \"\",\n" +
-                "                {\n" +
-                "                    serviceVersion: '.',\n" +
-                "                    layername: '.',\n" +
-                "                    alpha: true,\n" +
-                "                    type: \"png\",\n" +
-                "                    getURL: getURL\n" +
-                "                });\n" +
-                "\n" +
-                "            map.addLayer(layer);\n" +
-                "            map.zoomToExtent(mapBounds);\n" +
-                "            map.addControls([new OpenLayers.Control.PanZoomBar(),\n" +
-                "                new OpenLayers.Control.Navigation(),\n" +
-                "                new OpenLayers.Control.MousePosition(),\n" +
-                "                new OpenLayers.Control.ArgParser(),\n" +
-                "                new OpenLayers.Control.Attribution()]);\n" +
-                "        }\n" +
-                "\n" +
-                "        function getURL(bounds) {\n" +
-                "            bounds = this.adjustBounds(bounds);\n" +
-                "            var res = this.getServerResolution();\n" +
-                "            var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));\n" +
-                "            var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));\n" +
-                "            var z = this.getServerZoom();\n" +
-                "            var path = '.' + \"/\" + '.' + \"/\" + z + \"/\" + x + \"_\" + y + \".\" + this.type;\n" +
-                "            var url = this.url;\n" +
-                "            if (OpenLayers.Util.isArray(url)) {\n" +
-                "                url = this.selectUrl(path, url);\n" +
-                "            }\n" +
-                "            if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {\n" +
-                "                return url + path;\n" +
-                "            } else {\n" +
-                "                return emptyTileURL;\n" +
-                "            }\n" +
-                "        }\n" +
-                "\n" +
-                "        function getWindowHeight() {\n" +
-                "            if (self.innerHeight) return self.innerHeight;\n" +
-                "            if (document.documentElement && document.documentElement.clientHeight)\n" +
-                "                return document.documentElement.clientHeight;\n" +
-                "            if (document.body) return document.body.clientHeight;\n" +
-                "            return 0;\n" +
-                "        }\n" +
-                "\n" +
-                "        function getWindowWidth() {\n" +
-                "            if (self.innerWidth) return self.innerWidth;\n" +
-                "            if (document.documentElement && document.documentElement.clientWidth)\n" +
-                "                return document.documentElement.clientWidth;\n" +
-                "            if (document.body) return document.body.clientWidth;\n" +
-                "            return 0;\n" +
-                "        }\n" +
-                "\n" +
-                "        function resize() {\n" +
-                "            var map = document.getElementById(\"map\");\n" +
-                "            var header = document.getElementById(\"header\");\n" +
-                "            var subheader = document.getElementById(\"subheader\");\n" +
-                "            map.style.height = (getWindowHeight() - 80) + \"px\";\n" +
-                "            map.style.width = (getWindowWidth() - 20) + \"px\";\n" +
-                "            header.style.width = (getWindowWidth() - 20) + \"px\";\n" +
-                "            subheader.style.width = (getWindowWidth() - 20) + \"px\";\n" +
-                "            if (map.updateSize) {\n" +
-                "                map.updateSize();\n" +
-                "            }\n" +
-                "        }\n" +
-                "\n" +
-                "        onresize = function () {\n" +
-                "            resize();\n" +
-                "        };\n" +
-                "\n" +
-                "    </script>";
-        html += "</head>\n" +
-                "<body onload=\"init()\">\n" +
-                "<div id=\"header\"><h1>title</h1></div>\n" +
-                "<div id=\"subheader\">Generated by\n" +
-                "    <a href=\"http://www.klokan.cz/projects/gdal2tiles/\">GDAL2Tiles</a>,\n" +
-                "    Copyright &copy; 2008\n" +
-                "    <a href=\"http://www.klokan.cz/\">Klokan Petr Pridal</a>,\n" +
-                "    <a href=\"http://www.gdal.org/\">GDAL</a> &amp;\n" +
-                "    <a href=\"http://www.osgeo.org/\">OSGeo</a>\n" +
-                "    <a href=\"http://code.google.com/soc/\">GSoC</a>\n" +
-                "</div>\n" +
-                "<div id=\"map\"></div>\n" +
-                "<script type=\"text/javascript\">resize()</script>\n" +
-                "</body>\n" +
-                "</html>";
-        File file = new File(this.output + File.separator + "openlayers.html");
-        FileOutputStream fileOutputStream = null;
-        try {
-            fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(html.getBytes());
-            fileOutputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
 
     private double log2(double x) {

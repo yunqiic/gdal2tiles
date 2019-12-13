@@ -1,59 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv='imagetoolbar' content='no'/>
-    <title>Title</title>
-    <link href="https://cdn.bootcss.com/openlayers/4.6.5/ol.css" rel="stylesheet">
-    <script src="https://cdn.bootcss.com/openlayers/4.6.5/ol.js"></script>
-    <style type="text/css">
-        html, body {
-            overflow: hidden;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            font-family: 'Lucida Grande', Geneva, Arial, Verdana, sans-serif;
-        }
-
+    <meta charset='utf-8'/>
+    <title>Add a raster tile source</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet'/>
+    <style>
         body {
-            margin: 10px;
-            background: #fff;
+            margin: 0;
+            padding: 0;
         }
 
         #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
             width: 100%;
-            height: 100%;
-            border:1px solid red;
         }
     </style>
-    <script>
-        var map;
-
-        function init() {
-            map = new ol.Map({
-                target: "#map",
-                view: new ol.View({
-                    center: [100.7878, 23.7878]
-                }),
-                projection: "EPSG:4326"
-            })
-            var layer = new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    tileUrlFunction: function (tileCoord) {
-                        var z = tileCoord[0];
-                        var x = tileCoord[1];
-                        y = Math.pow(2, z) + tileCoord[2] - 1;
-                        return "http://localhost:1000/tiles/" + z + "/" + x + "_" + y + ".png";
-                    }
-                }),
-                maxZoom: 21,
-                minZoom: 17
-            });
-            map.addLayer(layer);
-        }
-    </script>
 </head>
-<body onload="init()">
-<div id="map"></div>
+<body>
+
+<div id='map'></div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoicG9saXhpYW9oYWkiLCJhIjoiY2sxcWZoZHVtMTc3ZTNucGdmNXNoa3p1aiJ9.lZR76GpA_C9-JUZHZyEWqQ';
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: {
+            "version": 8,
+            "sources": {
+                "tdt-street-label": {
+                    "type": "raster",
+                    "tiles": [
+                        'http://t0.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t1.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t2.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t3.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t4.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t5.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t6.tianditu.gov.cn/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0'
+                    ],
+                    "tileSize": 256,
+                },
+                "tdt-street-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        'http://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t1.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t2.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t3.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t4.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t5.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0',
+                        'http://t6.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=8971e4c7b3640d506c2dc111221af6a0'
+                    ],
+                    "tileSize": 256,
+                },
+                "my-tiles": {
+                    "type": "raster",
+                    "tiles": ['http://localhost:1000/tiles/{z}/{x}_{y}.png'],
+                    "tileSize": 256,
+                }
+            },
+            "layers": [{
+                "id": "tdt-street-layer-tiles",
+                "type": "raster",
+                "source": "tdt-street-tiles",
+                "minzoom": 0,
+                "maxzoom": 22
+            }, {
+                "id": "tdt-street-layer-label",
+                "type": "raster",
+                "source": "tdt-street-label",
+                "minzoom": 0,
+                "maxzoom": 22
+            }, {
+                "id": "my-img-tiles",
+                "type": "raster",
+                "source": "my-tiles",
+                "minzoom": 17,
+                "maxzoom": 21
+            }]
+        },
+        center: [116.40, 39.40], // starting position
+        zoom: 10, // starting zoom
+        minZoom: 1,
+        maxZoom: 18
+    });
+</script>
+
 </body>
 </html>
