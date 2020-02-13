@@ -1,4 +1,4 @@
-package com.walkgis.tiles.control;
+package com.walkgis.tiles.view;
 
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.layout.Pane;

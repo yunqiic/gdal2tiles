@@ -1,4 +1,4 @@
-package com.walkgis.tiles.control;
+package com.walkgis.tiles.view;
 
 
 import de.felixroske.jfxsupport.SplashScreen;

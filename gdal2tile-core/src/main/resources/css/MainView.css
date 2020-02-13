@@ -27,6 +27,7 @@
 
 #panelStandard:hover, #panelAdvance:hover, #panelGoogle:hover, #panelRaster:hover {
     -fx-background-color: #bdc3c7;
+    -fx-cursor: hand;
 }
 
 .anchor-panel .label {
@@ -37,18 +38,40 @@
     -fx-font-size: 18px;
 }
 
-#dataInfoPanel{
+#dataInfoPanel {
     -fx-background-color: #ecf0f1;
 }
 
-.main-label-info{
+.main-label-info {
     -fx-font-size: 18px;
     -fx-padding: 3 0 3 0;
     -fx-font-weight: bold;
     -fx-text-alignment: center;
 }
 
-.page-panel{
+.page-panel {
     -fx-background-color: #ffffff;
     -fx-border-color: #555555;
+}
+
+
+#panelOutputMBTiles, #panelOutputDir, #panelOutputGeopackage {
+    -fx-background-color: #bdc3c7;
+    -fx-cursor: hand;
+}
+
+#panelOutputMBTiles:hover, #panelOutputDir:hover, #panelOutputGeopackage:hover {
+    -fx-background-color: #ecf0f1;
+}
+
+#containerOutputMBTiles, #containerOutputDir, #containerOutputGeopackage {
+    -fx-background-color: #3498db;
+}
+
+#vbProgressContainer{
+    -fx-background-color: #1abc9c;
+}
+
+.advancePadding{
+    -fx-padding: 5 0 5 20;
 }

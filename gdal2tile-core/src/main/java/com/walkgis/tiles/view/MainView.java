@@ -1,4 +1,4 @@
-package com.walkgis.tiles.control;
+package com.walkgis.tiles.view;
 
 import de.felixroske.jfxsupport.AbstractFxmlView;
 import de.felixroske.jfxsupport.FXMLView;

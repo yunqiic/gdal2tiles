@@ -1,12 +1,13 @@
 package com.walkgis.tiles.web;
 
 import com.walkgis.tiles.MainApp;
-import com.walkgis.tiles.control.CusPanel;
+import com.walkgis.tiles.view.AdvanceSettingView;
+import com.walkgis.tiles.view.CusPanel;
 import com.walkgis.tiles.entity.FileItem;
 import com.walkgis.tiles.util.EnumProfile;
 import com.walkgis.tiles.util.EnumResampling;
 import com.walkgis.tiles.util.GDAL2Tiles;
-import com.walkgis.tiles.control.ReviewView;
+import com.walkgis.tiles.view.ReviewView;
 import de.felixroske.jfxsupport.AbstractFxmlView;
 import de.felixroske.jfxsupport.FXMLController;
 import javafx.beans.value.ObservableValue;
@@ -15,10 +16,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
@@ -39,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 
 
@@ -50,18 +49,24 @@ public class MainViewController implements Initializable {
     private ApplicationContext applicationContext;
     @Autowired
     private ReviewViewController reviewViewController;
+    @Autowired
+    private AdvanceSettingViewController advanceSettingViewController;
     @FXML
     private AnchorPane panelStandard, panelGoogle, panelRaster, panelAdvance;
     @FXML
-    private CusPanel panelFileList, panelTileTypeSelect, panelTileSetting;
+    private AnchorPane panelOutputDir, panelOutputMBTiles, panelOutputGeopackage;
     @FXML
-    private Button btnProve, btnNext, btnReview, btnOpenFile, btnRemove, btnChangeRSR, btnChangeExtent;
+    private CusPanel panelFileList, panelTileTypeSelect, panelTileSetting, panelProgress;
+    @FXML
+    private Button btnProve, btnNext, btnReview, btnOpenFile, btnRemove, btnChangeRSR, btnChangeExtent, btnSettingAdvance;
     @FXML
     private StackPane stackPanel;
     @FXML
     private ListView listViewFiles;
     @FXML
     private Label transform, projection;
+    @FXML
+    private ComboBox cmbZoomFrom, cmbZoomTo;
 
     public FileItem fileItem;
 
@@ -72,6 +77,10 @@ public class MainViewController implements Initializable {
         this.panelRaster.setOnMouseClicked(this::showSelectDialog);
         this.panelGoogle.setOnMouseClicked(this::showSelectDialog);
 
+        this.panelOutputDir.setOnMouseClicked(this::panelOutputDirClick);
+        this.panelOutputMBTiles.setOnMouseClicked(this::panelOutputMBTilesClick);
+        this.panelOutputGeopackage.setOnMouseClicked(this::panelOutputGeopackageClick);
+
         this.btnNext.setOnMouseClicked(this::btnNextClick);
         this.btnProve.setOnMouseClicked(this::btnProveClick);
         this.btnReview.setOnMouseClicked(this::btnReviewClick);
@@ -79,8 +88,12 @@ public class MainViewController implements Initializable {
         this.btnRemove.setOnMouseClicked(this::btnRemoveClick);
         this.btnChangeRSR.setOnMouseClicked(this::btnChangeRSRClick);
         this.btnChangeExtent.setOnMouseClicked(this::btnChangeExtentClick);
+        this.btnSettingAdvance.setOnMouseClicked(this::btnSettingAdvanceClick);
 
         this.listViewFiles.getSelectionModel().selectedItemProperty().addListener(this::noticeListItemChange);
+
+        this.cmbZoomFrom.getItems().addAll(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32));
+        this.cmbZoomTo.getItems().addAll(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32));
 
         if (fileItem != null) {
             this.projection.textProperty().bindBidirectional(fileItem.projectionProperty());
@@ -90,6 +103,40 @@ public class MainViewController implements Initializable {
         }
     }
 
+    @FXML
+    private void panelOutputGeopackageClick(MouseEvent event) {
+
+    }
+
+    @FXML
+    private void panelOutputMBTilesClick(MouseEvent event) {
+
+    }
+
+    @FXML
+    private void panelOutputDirClick(MouseEvent event) {
+        generateDirTiles();
+        navicateToProgressPanel();
+    }
+
+    @FXML
+    private void btnSettingAdvanceClick(MouseEvent event) {
+        AbstractFxmlView view = applicationContext.getBean(AdvanceSettingView.class);
+        Stage newStage = new Stage();
+        Scene newScene;
+        if (view.getView().getScene() != null) {
+            newScene = view.getView().getScene();
+        } else {
+            newScene = new Scene(view.getView());
+        }
+
+        newStage.setScene(newScene);
+        newStage.initModality(Modality.NONE);
+        newStage.initOwner(MainApp.getStage());
+        newStage.show();
+
+        advanceSettingViewController.init();
+    }
 
     @FXML
     private void showSelectDialog(MouseEvent event) {
@@ -201,41 +248,34 @@ public class MainViewController implements Initializable {
         Integer currentIndex = cusPanel.index.get();
         currentIndex = currentIndex + 1;
 
-        if (cusPanel.getId().equals("panelOutputSetting")) {
-            DirectoryChooser directoryChooser = new DirectoryChooser();
-            directoryChooser.setTitle("选择保存的位置");
-            Stage selectFile = new Stage();
-            if (StringUtils.isEmpty(defaultDir))
-                defaultDir = System.getProperty("user.home");
-            directoryChooser.setInitialDirectory(new File(defaultDir));
+        if (cusPanel.getId().equalsIgnoreCase("panelTileTypeSelect")) {
 
-            File file = directoryChooser.showDialog(selectFile);
-            if (file != null) {
-                if (listViewFiles.getItems().size() <= 0) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Error Dialog");
-                    alert.setHeaderText("没有输入文件");
-                    alert.setContentText("没有输入文件");
-
-                    alert.showAndWait();
-                    return;
-                }
-                FileItem fileItem = (FileItem) listViewFiles.getItems().get(0);
-                generateTile(fileItem.getFile(), file);
-            }
         } else if (cusPanel.getId().equalsIgnoreCase("panelFileList")) {
             if (listViewFiles.getItems().size() == 0) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error Dialog");
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("告警");
                 alert.setHeaderText("没有输入文件");
                 alert.setContentText("没有输入文件");
 
                 alert.showAndWait();
                 return;
             }
-        } else if (cusPanel.getId().equalsIgnoreCase("panelTileSetting")) {
 
-        }else if (cusPanel.getId().equalsIgnoreCase("panelTileTypeSelect")) {
+            if (listViewFiles.getItems().size() > 1) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("告警");
+                alert.setHeaderText("告警");
+                alert.setContentText("目前版本只支持一个影像");
+
+                alert.showAndWait();
+                return;
+            }
+        } else if (cusPanel.getId().equalsIgnoreCase("panelTileSetting")) {
+            cmbZoomFrom.getSelectionModel().select(0);
+            cmbZoomTo.getSelectionModel().select(0);
+            generateDirTiles();
+            navicateToProgressPanel();
+        } else if (cusPanel.getId().equals("panelProgress")) {
 
         }
 
@@ -250,8 +290,6 @@ public class MainViewController implements Initializable {
                 panel.setVisible(true);
             else panel.setVisible(false);
         });
-
-
     }
 
     @FXML
@@ -273,6 +311,41 @@ public class MainViewController implements Initializable {
         reviewViewController.showReview();
     }
 
+    private void navicateToProgressPanel() {
+        ObservableList<Node> children = stackPanel.getChildren();
+        Integer finalCurrentIndex1 = 4;
+        children.forEach(child -> {
+            CusPanel panel = (CusPanel) child;
+            if (panel.index.get() == finalCurrentIndex1)
+                panel.setVisible(true);
+            else panel.setVisible(false);
+        });
+    }
+
+    private void generateDirTiles() {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("选择保存的位置");
+        Stage selectFile = new Stage();
+        if (StringUtils.isEmpty(defaultDir))
+            defaultDir = System.getProperty("user.home");
+        directoryChooser.setInitialDirectory(new File(defaultDir));
+
+        File file = directoryChooser.showDialog(selectFile);
+        if (file != null) {
+            if (listViewFiles.getItems().size() <= 0) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Dialog");
+                alert.setHeaderText("没有输入文件");
+                alert.setContentText("没有输入文件");
+
+                alert.showAndWait();
+                return;
+            }
+            FileItem fileItem = (FileItem) listViewFiles.getItems().get(0);
+            generateTile(fileItem.getFile(), file);
+        }
+    }
+
     public void generateTile(File fileInput, File fileOutput) {
         String[] args = "-profile geodetic E:\\Data\\CAOBAO\\aaa.tif E:\\Data\\CAOBAO\\tiles\\java".split(" ");
         gdal.AllRegister();
@@ -283,21 +356,22 @@ public class MainViewController implements Initializable {
         // 为了使属性表字段支持中文，请添加下面这句
         gdal.SetConfigOption("SHAPE_ENCODING", "");
         gdal.SetConfigOption("GDAL_DATA", "gdal-data");
-
-        try {
-            GDAL2Tiles gdal2tiles = new GDAL2Tiles();
-            gdal2tiles.setInput(fileInput.getAbsolutePath());
-            gdal2tiles.setOutput(fileOutput.getAbsolutePath());
-            gdal2tiles.setResampling(EnumResampling.GRA_Average);
-            gdal2tiles.setProfile(EnumProfile.mercator);
-            gdal2tiles.process(null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        new Thread(() -> {
+            try {
+                GDAL2Tiles gdal2tiles = new GDAL2Tiles();
+                gdal2tiles.setInput(fileInput.getAbsolutePath());
+                gdal2tiles.setOutput(fileOutput.getAbsolutePath());
+                gdal2tiles.setResampling(EnumResampling.GRA_Average);
+                gdal2tiles.setProfile(EnumProfile.mercator);
+                gdal2tiles.process(null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     /**
@@ -309,11 +383,14 @@ public class MainViewController implements Initializable {
      */
     @FXML
     private void noticeListItemChange(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
-        if (newValue==null) return;
+        if (newValue == null) return;
         fileItem = (FileItem) newValue;
         if (fileItem.getFile().exists() && fileItem.getDataset() != null) {
             this.projection.setText(fileItem.getProjection());
             this.transform.setText(fileItem.getTransform());
+        } else {
+            this.projection.setText("");
+            this.transform.setText("");
         }
     }
 

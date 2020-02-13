@@ -4,8 +4,8 @@
  */
 package com.walkgis.tiles;
 
-import com.walkgis.tiles.control.DemoSplash;
-import com.walkgis.tiles.control.MainView;
+import com.walkgis.tiles.view.DemoSplash;
+import com.walkgis.tiles.view.MainView;
 import de.felixroske.jfxsupport.AbstractJavaFxApplicationSupport;
 import javafx.stage.Stage;
 import org.gdal.gdal.gdal;
