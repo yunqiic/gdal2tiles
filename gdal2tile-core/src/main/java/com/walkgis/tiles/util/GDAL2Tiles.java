@@ -111,7 +111,7 @@ public class GDAL2Tiles {
     private String gettempfilename(String suffix) {
         String tmpdir = System.getProperty("java.io.tmpdir");
         int d = 0 + (int) (Math.random() * (1000000000 - 0 + 1));
-        String random_part = String.format("file%d", d);
+        String random_part = String.format("file%f", d);
         return tmpdir + File.separator + random_part + suffix;
     }
 
@@ -274,14 +274,14 @@ public class GDAL2Tiles {
                 s = s.replace("<GDALWarpOptions>", "<GDALWarpOptions><Option name=\"INIT_DEST\">NO_DATA</Option><Option name=\"UNIFIED_SRC_NODATA\">YES</Option>");
                 for (int i = 0; i < this.in_nodata.size(); i++) {
                     s = s.replace(
-                            String.format("<BandMapping src=\"%i\" dst=\"%i\"/>", i + 1, i + 1),
-                            String.format("<BandMapping src=\"%i\" dst=\"%i\"><SrcNoDataReal>%i</SrcNoDataReal><SrcNoDataImag>0</SrcNoDataImag><DstNoDataReal>%i</DstNoDataReal><DstNoDataImag>0</DstNoDataImag></BandMapping>", i + 1, i + 1, this.in_nodata.get(i), this.in_nodata.get(i))
+                            String.format("<BandMapping src=\"%d\" dst=\"%d\"/>", i + 1, i + 1),
+                            String.format("<BandMapping src=\"%d\" dst=\"%d\"><SrcNoDataReal>%f</SrcNoDataReal><SrcNoDataImag>0</SrcNoDataImag><DstNoDataReal>%f</DstNoDataReal><DstNoDataImag>0</DstNoDataImag></BandMapping>", i + 1, i + 1, this.in_nodata.get(i), this.in_nodata.get(i))
                     );
                 }
 
                 FileCopyUtils.copy(s, new FileWriter(tempfilename));
                 this.out_ds = gdal.Open(tempfilename.getAbsolutePath(), gdalconst.GA_ReadOnly);
-                this.out_ds.SetMetadataItem("NODATA_VALUES", String.format("%i %i %i", this.in_nodata.get(0), this.in_nodata.get(1), this.in_nodata.get(2)));
+                this.out_ds.SetMetadataItem("NODATA_VALUES", String.format("%f %f %f", this.in_nodata.get(0), this.in_nodata.get(1), this.in_nodata.get(2)));
             }
 
             if ((this.in_nodata == null || this.in_nodata.size() == 0) && this.out_ds.GetRasterCount() == 3) {
@@ -289,8 +289,8 @@ public class GDAL2Tiles {
                 this.out_ds.GetDriver().CreateCopy(tempfilename.getAbsolutePath(), this.out_ds);
 
                 String s = FileCopyUtils.copyToString(new FileReader(tempfilename));
-                s = s.replace("<BlockXSize>", String.format("<VRTRasterBand dataType=\"Byte\" band=\"%i\" subClass=\"VRTWarpedRasterBand\"><ColorInterp>Alpha</ColorInterp></VRTRasterBand><BlockXSize>", (this.out_ds.GetRasterCount() + 1)));
-                s = s.replace("</GDALWarpOptions>", String.format("<DstAlphaBand>%i</DstAlphaBand></GDALWarpOptions>", this.out_ds.GetRasterCount() + 1));
+                s = s.replace("<BlockXSize>", String.format("<VRTRasterBand dataType=\"Byte\" band=\"%d\" subClass=\"VRTWarpedRasterBand\"><ColorInterp>Alpha</ColorInterp></VRTRasterBand><BlockXSize>", (this.out_ds.GetRasterCount() + 1)));
+                s = s.replace("</GDALWarpOptions>", String.format("<DstAlphaBand>%d</DstAlphaBand></GDALWarpOptions>", this.out_ds.GetRasterCount() + 1));
                 s = s.replace("</WorkingDataType>", "</WorkingDataType><Option name=\"INIT_DEST\">0</Option>");
 
                 FileCopyUtils.copy(s, new FileWriter(tempfilename));
@@ -706,7 +706,7 @@ public class GDAL2Tiles {
             for (int i = 1; i <= tilebands; i++) {
                 int res = gdal.RegenerateOverview(dsquery.GetRasterBand(i), dstile.GetRasterBand(i), "average");
                 if (res != 0)
-                    logger.error(String.format("RegenerateOverview() failed on %s, error %d", tilefilename, res));
+                    logger.error(String.format("RegenerateOverview() failed on %s, error %f", tilefilename, res));
             }
         } else if (this.resampling == EnumResampling.Other) {//antialias
 //            # Scaling by PIL (Python Imaging Library) - improved Lanczos
@@ -724,7 +724,7 @@ public class GDAL2Tiles {
             dstile.SetGeoTransform(new double[]{0.0, 1.0, 0.0, 0.0, 0.0, 1.0});
             int res = gdal.ReprojectImage(dsquery, dstile, null, null, this.resampling.getValue());
             if (res != 0)
-                logger.error("ReprojectImage() failed on %s, error %d", tilefilename, res);
+                logger.error("ReprojectImage() failed on %s, error %f", tilefilename, res);
         }
     }
 
