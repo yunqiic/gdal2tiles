@@ -2,18 +2,19 @@ package com.walkgis.tiles.web;
 
 import com.walkgis.tiles.MainApp;
 import com.walkgis.tiles.control.CusPanel;
-import com.walkgis.tiles.control.LoadingView;
-import com.walkgis.tiles.control.MainView;
 import com.walkgis.tiles.entity.FileItem;
 import com.walkgis.tiles.util.EnumProfile;
 import com.walkgis.tiles.util.EnumResampling;
 import com.walkgis.tiles.util.GDAL2Tiles;
+import com.walkgis.tiles.control.ReviewView;
+import de.felixroske.jfxsupport.AbstractFxmlView;
 import de.felixroske.jfxsupport.FXMLController;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -31,6 +32,7 @@ import org.gdal.gdalconst.gdalconst;
 import org.gdal.ogr.ogr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -41,15 +43,19 @@ import java.util.ResourceBundle;
 
 
 @FXMLController
-public class MainController implements Initializable {
+public class MainViewController implements Initializable {
     @Value(value = "${defaultDir}")
     private String defaultDir;
+    @Autowired
+    private ApplicationContext applicationContext;
+    @Autowired
+    private ReviewViewController reviewViewController;
     @FXML
     private AnchorPane panelStandard, panelGoogle, panelRaster, panelAdvance;
     @FXML
     private CusPanel panelFileList, panelTileTypeSelect, panelTileSetting;
     @FXML
-    private Button btnProve, btnNext, btnReview;
+    private Button btnProve, btnNext, btnReview, btnOpenFile, btnRemove, btnChangeRSR, btnChangeExtent;
     @FXML
     private StackPane stackPanel;
     @FXML
@@ -58,6 +64,32 @@ public class MainController implements Initializable {
     private Label transform, projection;
 
     public FileItem fileItem;
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        this.panelStandard.setOnMouseClicked(this::showSelectDialog);
+        this.panelAdvance.setOnMouseClicked(this::showSelectDialog);
+        this.panelRaster.setOnMouseClicked(this::showSelectDialog);
+        this.panelGoogle.setOnMouseClicked(this::showSelectDialog);
+
+        this.btnNext.setOnMouseClicked(this::btnNextClick);
+        this.btnProve.setOnMouseClicked(this::btnProveClick);
+        this.btnReview.setOnMouseClicked(this::btnReviewClick);
+        this.btnOpenFile.setOnMouseClicked(this::btnOpenFileClick);
+        this.btnRemove.setOnMouseClicked(this::btnRemoveClick);
+        this.btnChangeRSR.setOnMouseClicked(this::btnChangeRSRClick);
+        this.btnChangeExtent.setOnMouseClicked(this::btnChangeExtentClick);
+
+        this.listViewFiles.getSelectionModel().selectedItemProperty().addListener(this::noticeListItemChange);
+
+        if (fileItem != null) {
+            this.projection.textProperty().bindBidirectional(fileItem.projectionProperty());
+            this.transform.textProperty().bindBidirectional(fileItem.transformProperty());
+            this.projection.setText("");
+            this.transform.setText("");
+        }
+    }
+
 
     @FXML
     private void showSelectDialog(MouseEvent event) {
@@ -90,6 +122,54 @@ public class MainController implements Initializable {
             listViewFiles.getItems().add(item);
             btnNextClick(null);
         }
+    }
+
+    @FXML
+    private void btnOpenFileClick(MouseEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("选择数据");
+        Stage selectFile = new Stage();
+        if (StringUtils.isEmpty(defaultDir))
+            defaultDir = System.getProperty("user.home");
+        fileChooser.setInitialDirectory(new File(defaultDir));
+
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("所有文件类型", "*.pdf", "*.tif"),
+                new FileChooser.ExtensionFilter("GeoPDF", "*.pdf"),
+                new FileChooser.ExtensionFilter("GeoTIFF", "*.tif")
+        );
+        File file = fileChooser.showOpenDialog(selectFile);
+        if (file != null) {
+            Dataset dataset = gdal.Open(file.getAbsolutePath(), gdalconst.GA_ReadOnly);
+            if (dataset == null) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Dialog");
+                alert.setHeaderText("Look, an Error Dialog");
+                alert.setContentText(gdal.GetLastErrorMsg());
+
+                alert.showAndWait();
+                return;
+            }
+            FileItem item = new FileItem(file, 0);
+            item.setDataset(dataset);
+            listViewFiles.getItems().add(item);
+        }
+    }
+
+    @FXML
+    private void btnRemoveClick(MouseEvent event) {
+        ObservableList<FileItem> fileItemObservableList = listViewFiles.getSelectionModel().getSelectedItems();
+        fileItemObservableList.forEach(fileItem1 -> listViewFiles.getItems().remove(fileItem1));
+    }
+
+    @FXML
+    private void btnChangeRSRClick(MouseEvent event) {
+
+    }
+
+    @FXML
+    private void btnChangeExtentClick(MouseEvent event) {
+
     }
 
     @FXML
@@ -143,6 +223,20 @@ public class MainController implements Initializable {
                 FileItem fileItem = (FileItem) listViewFiles.getItems().get(0);
                 generateTile(fileItem.getFile(), file);
             }
+        } else if (cusPanel.getId().equalsIgnoreCase("panelFileList")) {
+            if (listViewFiles.getItems().size() == 0) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Dialog");
+                alert.setHeaderText("没有输入文件");
+                alert.setContentText("没有输入文件");
+
+                alert.showAndWait();
+                return;
+            }
+        } else if (cusPanel.getId().equalsIgnoreCase("panelTileSetting")) {
+
+        }else if (cusPanel.getId().equalsIgnoreCase("panelTileTypeSelect")) {
+
         }
 
         if (currentIndex > children.size()) {
@@ -162,7 +256,21 @@ public class MainController implements Initializable {
 
     @FXML
     private void btnReviewClick(MouseEvent event) {
-        MainApp.showView(LoadingView.class, Modality.WINDOW_MODAL);
+        AbstractFxmlView view = applicationContext.getBean(ReviewView.class);
+        Stage newStage = new Stage();
+        Scene newScene;
+        if (view.getView().getScene() != null) {
+            newScene = view.getView().getScene();
+        } else {
+            newScene = new Scene(view.getView());
+        }
+
+        newStage.setScene(newScene);
+        newStage.initModality(Modality.NONE);
+        newStage.initOwner(MainApp.getStage());
+        newStage.show();
+
+        reviewViewController.showReview();
     }
 
     public void generateTile(File fileInput, File fileOutput) {
@@ -201,31 +309,11 @@ public class MainController implements Initializable {
      */
     @FXML
     private void noticeListItemChange(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
+        if (newValue==null) return;
         fileItem = (FileItem) newValue;
         if (fileItem.getFile().exists() && fileItem.getDataset() != null) {
             this.projection.setText(fileItem.getProjection());
             this.transform.setText(fileItem.getTransform());
-        }
-    }
-
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        this.panelStandard.setOnMouseClicked(this::showSelectDialog);
-        this.panelAdvance.setOnMouseClicked(this::showSelectDialog);
-        this.panelRaster.setOnMouseClicked(this::showSelectDialog);
-        this.panelGoogle.setOnMouseClicked(this::showSelectDialog);
-
-        this.btnNext.setOnMouseClicked(this::btnNextClick);
-        this.btnProve.setOnMouseClicked(this::btnProveClick);
-        this.btnReview.setOnMouseClicked(this::btnReviewClick);
-
-        this.listViewFiles.getSelectionModel().selectedItemProperty().addListener(this::noticeListItemChange);
-
-        if (fileItem != null) {
-            this.projection.textProperty().bindBidirectional(fileItem.projectionProperty());
-            this.transform.textProperty().bindBidirectional(fileItem.transformProperty());
-            this.projection.setText("");
-            this.transform.setText("");
         }
     }
 

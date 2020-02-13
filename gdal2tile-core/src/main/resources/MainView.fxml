@@ -10,7 +10,7 @@
 <?scenebuilder-background-color 0xdfdfdfff?>
 
 <VBox prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.MainController">
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.MainViewController">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
@@ -137,18 +137,18 @@
                                styleClass="main-label-info" text="坐标系统"/>
                         <Label fx:id="projection" wrapText="true" layoutX="617.0" layoutY="72.0" prefHeight="31.0"
                                prefWidth="272.0" text="EPSG:4326"/>
-                        <Button layoutX="652.0" layoutY="103.0" mnemonicParsing="false" prefHeight="31.0"
+                        <Button fx:id="btnChangeRSR" layoutX="652.0" layoutY="103.0" mnemonicParsing="false" prefHeight="31.0"
                                 prefWidth="141.0" text="改变"/>
                         <Label layoutX="617.0" layoutY="136.0" prefHeight="35.0" prefWidth="278.0"
                                styleClass="main-label-info" text="坐标范围"/>
                         <Label fx:id="transform" layoutX="617.0" layoutY="170.0" prefHeight="44.0" prefWidth="272.0"
                                text="102.232323   0.000483    0&#10;24.2323232   0   -0.000483"/>
-                        <Button layoutX="653.0" layoutY="214.0" mnemonicParsing="false" prefHeight="31.0"
+                        <Button fx:id="btnChangeExtent" layoutX="653.0" layoutY="214.0" mnemonicParsing="false" prefHeight="31.0"
                                 prefWidth="141.0" text="改变"/>
                         <WebView layoutX="617.0" layoutY="262.0" prefHeight="193.0" prefWidth="272.0"/>
-                        <Button layoutX="35.0" layoutY="465.0" mnemonicParsing="false" prefHeight="33.0"
+                        <Button fx:id="btnOpenFile" layoutX="35.0" layoutY="465.0" mnemonicParsing="false" prefHeight="33.0"
                                 prefWidth="108.0" text="打开文件"/>
-                        <Button layoutX="175.0" layoutY="465.0" mnemonicParsing="false" prefHeight="34.0"
+                        <Button fx:id="btnRemove" layoutX="175.0" layoutY="465.0" mnemonicParsing="false" prefHeight="34.0"
                                 prefWidth="72.0" text="删除"/>
                         <Button fx:id="btnReview" layoutX="533.0" layoutY="461.0" mnemonicParsing="false"
                                 prefHeight="41.0"

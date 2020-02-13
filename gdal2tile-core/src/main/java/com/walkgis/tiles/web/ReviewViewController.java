@@ -1,6 +1,5 @@
 package com.walkgis.tiles.web;
 
-import com.walkgis.tiles.control.LoadingView;
 import com.walkgis.tiles.entity.FileItem;
 import de.felixroske.jfxsupport.FXMLController;
 import javafx.embed.swing.SwingFXUtils;
@@ -24,17 +23,22 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 
 @FXMLController
-public class LoadingViewController implements Initializable {
+public class ReviewViewController implements Initializable {
     @FXML
     private ImageView imageView;
     @FXML
     private AnchorPane root;
 
     @Autowired
-    public MainController mainController;
+    public MainViewController mainController;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+    }
+
+    @FXML
+    public void showReview() {
         Object o = mainController.getSelectItem();
         if (o != null && o instanceof FileItem) {
             FileItem fileItem = (FileItem) o;

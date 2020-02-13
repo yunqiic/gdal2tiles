@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 
 <AnchorPane fx:id="root" prefHeight="278.0" prefWidth="518.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.LoadingViewController">
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.ReviewViewController">
     <children>
         <ImageView fx:id="imageView" fitHeight="293.0" fitWidth="518.0" layoutY="1.0" pickOnBounds="true"
                    preserveRatio="true">
