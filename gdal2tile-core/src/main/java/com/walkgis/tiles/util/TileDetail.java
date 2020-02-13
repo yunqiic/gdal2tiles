@@ -1,18 +1,18 @@
 package com.walkgis.tiles.util;
 
 public class TileDetail {
-    private Integer tx = 0;
-    private Integer ty = 0;
-    private Integer tz = 0;
-    private Integer rx = 0;
-    private Integer ry = 0;
-    private Integer rxsize = 0;
-    private Integer rysize = 0;
-    private Integer wx = 0;
-    private Integer wy = 0;
-    private Integer wxsize = 0;
-    private Integer wysize = 0;
-    private Integer querysize = 0;
+    public Integer tx = 0;
+	public Integer ty = 0;
+	public Integer tz = 0;
+	public Integer rx = 0;
+	public Integer ry = 0;
+	public Integer rxsize = 0;
+	public Integer rysize = 0;
+	public Integer wx = 0;
+	public Integer wy = 0;
+	public Integer wxsize = 0;
+	public Integer wysize = 0;
+	public Integer querysize = 0;
 
 	public TileDetail(Integer tx, Integer ty, Integer tz, Integer rx, Integer ry, Integer rxsize, Integer rysize, Integer wx, Integer wy, Integer wxsize, Integer wysize, Integer querysize) {
 		this.tx = tx;

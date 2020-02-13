@@ -1,6 +1,7 @@
 package com.walkgis.tiles.web;
 
 import com.walkgis.tiles.MainApp;
+import com.walkgis.tiles.util.GDAL2TilesMulti;
 import com.walkgis.tiles.view.AdvanceSettingView;
 import com.walkgis.tiles.view.CusPanel;
 import com.walkgis.tiles.entity.FileItem;
@@ -356,22 +357,27 @@ public class MainViewController implements Initializable {
         // 为了使属性表字段支持中文，请添加下面这句
         gdal.SetConfigOption("SHAPE_ENCODING", "");
         gdal.SetConfigOption("GDAL_DATA", "gdal-data");
-        new Thread(() -> {
-            try {
-                GDAL2Tiles gdal2tiles = new GDAL2Tiles();
-                gdal2tiles.setInput(fileInput.getAbsolutePath());
-                gdal2tiles.setOutput(fileOutput.getAbsolutePath());
-                gdal2tiles.setResampling(EnumResampling.GRA_Average);
-                gdal2tiles.setProfile(EnumProfile.mercator);
-                gdal2tiles.process(null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+        try {
+//                GDAL2Tiles gdal2tiles = new GDAL2Tiles();
+//                gdal2tiles.setInput(fileInput.getAbsolutePath());
+//                gdal2tiles.setOutput(fileOutput.getAbsolutePath());
+//                gdal2tiles.setResampling(EnumResampling.GRA_Average);
+//                gdal2tiles.setProfile(EnumProfile.mercator);
+//                gdal2tiles.process(null);
+
+            GDAL2TilesMulti gdal2tiles = new GDAL2TilesMulti();
+            gdal2tiles.setInput(fileInput.getAbsolutePath());
+            gdal2tiles.setOutput(fileOutput.getAbsolutePath());
+            gdal2tiles.setResampling(EnumResampling.GRA_Average);
+            gdal2tiles.setProfile(EnumProfile.mercator);
+            gdal2tiles.process(null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
