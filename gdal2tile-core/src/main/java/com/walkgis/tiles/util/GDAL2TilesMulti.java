@@ -70,7 +70,7 @@ public class GDAL2TilesMulti {
     private String s_srs;
     private File tmp_vrt_filename = null;
 
-    private final ExecutorService service = Executors.newFixedThreadPool(4);
+    private final ExecutorService service = Executors.newFixedThreadPool(8);
 
     private static ThreadLocal<Dataset> threadLocal = new ThreadLocal();
 
@@ -237,6 +237,7 @@ public class GDAL2TilesMulti {
 
 
         String tilefilename = this.output_folder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, this.tileext);
+        new File(tilefilename).getParentFile().mkdirs();
         Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
 
         byte[] data = new byte[1024 * 1024 * ds.GetRasterCount()];
