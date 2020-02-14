@@ -52,31 +52,32 @@
         target: 'map',
         layers: [
             new ol.layer.Tile({
+                extent: [102.33342909589446, 24.927098652553617, 102.33616855052723, 24.928682313276244],
                 source: new ol.source.XYZ({
-                    url: "http://t{0-7}.tianditu.com/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9"
+                    url: './{z}/{x}_{y}.png',
+                    minZoom: 17,
+                    maxZoom: 21,
                 }),
             }),
             new ol.layer.Tile({
                 source: new ol.source.XYZ({
-                    url: "http://t{0-7}.tianditu.com/DataServer?T=cva_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9"
+                    url: "http://t{0-7}.tianditu.com/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9",
+                    projection: "EPSG:4326"
+                })
+            }),
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: "http://t{0-7}.tianditu.com/DataServer?T=cva_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9",
+                    projection: "EPSG:4326"
                 }),
             })
         ],
         view: new ol.View({
-            center: [102.8622, 23.6644],
-            zoom: 1
+            center: [102.33342909589446, 24.927098652553617],
+            zoom: 17,
+            projection: "EPSG:4326"
         })
     });
-
-    map.addLayer(new ol.layer.Tile({
-        // extent: [102.33342909589446, 24.927098652553617, 102.33616855052723, 24.928682313276244],
-        source: new ol.source.XYZ({
-            url: './{z}/{x}_{y}.png',
-            minZoom: 17,
-            maxZoom: 21,
-        }),
-    }))
-    console.log("")
 </script>
 </body>
 </html>
