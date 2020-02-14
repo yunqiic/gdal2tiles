@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+
+    <link href="https://cdn.bootcss.com/openlayers/4.6.5/ol.css" rel="stylesheet">
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="https://cdn.bootcss.com/openlayers/4.6.5/ol.js"></script>
+    <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            padding: 10px;
+        }
+
+        #map {
+            position: fixed;
+            left: 0px;
+            right: 0px;
+            top: 0px;
+            bottom: 0px;
+        }
+
+        #mouse-position {
+            position: fixed;;
+            bottom: 10px;
+            left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="map" class="map"></div>
+<div id="mouse-position"></div>
+<script>
+    var mousePositionControl = new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(4),
+        projection: 'EPSG:4326',
+        className: 'custom-mouse-position',
+        target: document.getElementById('mouse-position'),
+        undefinedHTML: '&nbsp;'
+    });
+    var map = new ol.Map({
+        controls: ol.control.defaults({
+            attributionOptions: ({
+                collapsible: false
+            })
+        }).extend([mousePositionControl]),
+        target: 'map',
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: "http://t{0-7}.tianditu.com/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9"
+                }),
+            }),
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: "http://t{0-7}.tianditu.com/DataServer?T=cva_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9"
+                }),
+            })
+        ],
+        view: new ol.View({
+            center: [102.8622, 23.6644],
+            zoom: 1
+        })
+    });
+
+    map.addLayer(new ol.layer.Tile({
+        // extent: [102.33342909589446, 24.927098652553617, 102.33616855052723, 24.928682313276244],
+        source: new ol.source.XYZ({
+            url: './{z}/{x}_{y}.png',
+            minZoom: 17,
+            maxZoom: 21,
+        }),
+    }))
+    console.log("")
+</script>
+</body>
+</html>

@@ -1,7 +1,15 @@
 package com.walkgis.tiles.util;
 
+import ch.qos.logback.core.util.FileUtil;
+import com.walkgis.tiles.MainApp;
 import mil.nga.geopackage.BoundingBox;
 import org.apache.commons.cli.*;
+import org.beetl.core.Configuration;
+import org.beetl.core.GroupTemplate;
+import org.beetl.core.Template;
+import org.beetl.core.resource.ClasspathResourceLoader;
+import org.beetl.core.resource.FileResourceLoader;
+import org.beetl.core.resource.StringTemplateResourceLoader;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
@@ -14,8 +22,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 
-import javax.xml.crypto.Data;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -141,9 +151,7 @@ public class GDAL2TilesMulti {
                         continue;
                     }
 
-                    if (!new File(tilefilename).getParentFile().exists()) {
-                        new File(tilefilename).getParentFile().mkdirs();
-                    }
+                    FileUtil.createMissingParentDirectories(new File(tilefilename));
 
                     Dataset dsquery = memDriver.Create("", 2 * tileJobInfo.tileSize, 2 * tileJobInfo.tileSize, tilebands);
                     Dataset dstile = memDriver.Create("", tileJobInfo.tileSize, tileJobInfo.tileSize, tilebands);
@@ -236,7 +244,7 @@ public class GDAL2TilesMulti {
         querysize = tileDetail.querysize;
 
 
-        String tilefilename = this.output_folder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, this.tileext);
+        String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
         new File(tilefilename).getParentFile().mkdirs();
         Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
 
@@ -564,9 +572,8 @@ public class GDAL2TilesMulti {
 
 
     private void generate_metadata() {
-        if (!new File(this.output_folder).exists()) {
+        if (!new File(this.output_folder).exists())
             new File(this.output_folder).mkdirs();
-        }
         double[] southWest = new double[2];
         double[] northEast = new double[2];
         if (this.profile == EnumProfile.mercator) {
@@ -577,12 +584,9 @@ public class GDAL2TilesMulti {
             northEast = new double[]{Math.min(85.05112878, northEast[0]), Math.min(180.0, northEast[1])};
 
             this.swne = new double[]{southWest[0], southWest[1], northEast[0], northEast[1]};
-            //初始化Openyers
-//            if not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'openlayers.html')):
-//                f = open(os.path.join(self.output_folder, 'openlayers.html'), 'w')
-//                f.write(self.generate_openlayers())
-//                f.close()
 
+            this.generate_openlayers();
+            this.generate_leaflet();
         } else if (this.profile == EnumProfile.geodetic) {
             southWest = new double[]{this.ominy, this.ominx};
             northEast = new double[]{this.omaxy, this.omaxx};
@@ -591,22 +595,14 @@ public class GDAL2TilesMulti {
             northEast = new double[]{Math.min(90.0, northEast[0]), Math.min(180.0, northEast[1])};
 
             this.swne = new double[]{southWest[0], southWest[1], northEast[0], northEast[1]};
-            //初始化Openyers
-//            if not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'openlayers.html')):
-//                f = open(os.path.join(self.output_folder, 'openlayers.html'), 'w')
-//                f.write(self.generate_openlayers())
-//                f.close()
+            this.generate_openlayers();
         } else if (this.profile == EnumProfile.raster) {
 
             southWest = new double[]{this.ominy, this.ominx};
             northEast = new double[]{this.omaxy, this.omaxx};
 
             this.swne = new double[]{southWest[0], southWest[1], northEast[0], northEast[1]};
-            //初始化Openyers
-//            if not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'openlayers.html')):
-//                f = open(os.path.join(self.output_folder, 'openlayers.html'), 'w')
-//                f.write(self.generate_openlayers())
-//                f.close()
+            this.generate_openlayers();
         }
         // Generate tilemapresource.xml.
 
@@ -624,6 +620,108 @@ public class GDAL2TilesMulti {
             }
         }
 
+    }
+
+    private void generate_leaflet() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("title", "");
+        args.put("htmltitle", "");
+        args.put("bingkey", "this.options.bingkey");
+        args.put("south", this.swne[0]);
+        args.put("west", this.swne[1]);
+        args.put("north", this.swne[2]);
+        args.put("east", this.swne[3]);
+
+        args.put("centerlon", (this.swne[2] + this.swne[0]) / 2);
+        args.put("centerlat", (this.swne[1] + this.swne[3]) / 2);
+
+        args.put("minzoom", this.tminz);
+        args.put("maxzoom", this.tmaxz);
+        args.put("beginzoom", this.tmaxz);
+
+        args.put("tile_size", this.tilesize);
+        args.put("tileformat", this.tileext);
+        args.put("publishurl", "this.options.url");
+        args.put("copyright", "this.options.copyright");
+        args.put("profile", this.profile);
+
+        String s = "";
+        try {
+            InputStream inputStream = MainApp.class.getClassLoader().getResourceAsStream("leaflet.html");
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+            StringBuffer content = new StringBuffer();
+            while ((s = br.readLine()) != null) {
+                content = content.append(s);
+            }
+
+            //初始化代码
+            StringTemplateResourceLoader resourceLoader = new StringTemplateResourceLoader();
+            Configuration cfg = Configuration.defaultConfiguration();
+            GroupTemplate gt = new GroupTemplate(resourceLoader, cfg);
+            //获取模板
+            Template t = gt.getTemplate(content.toString());
+            t.binding(args);
+            //渲染结果
+            String str = t.render();
+
+            //保存文本到文件
+            Path rootLocation = Paths.get(this.output_folder);
+            if (Files.notExists(rootLocation)) {
+                Files.createDirectories(rootLocation);
+            }
+            //data.js是文件
+            Path path = rootLocation.resolve("leaflet.html");
+            byte[] strToBytes = str.getBytes();
+            Files.write(path, strToBytes);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void generate_openlayers() {
+        Map<String, Object> args = new HashMap<>();
+        args.put("title", "");
+        args.put("bingkey", "this.options.bingkey");
+        args.put("south", this.swne[0]);
+        args.put("west", this.swne[1]);
+        args.put("north", this.swne[2]);
+        args.put("east", this.swne[3]);
+
+        args.put("minzoom", this.tminz);
+        args.put("maxzoom", this.tmaxz);
+        args.put("tile_size", this.tilesize);
+        args.put("tileformat", this.tileext);
+        args.put("publishurl", "this.options.url");
+        args.put("copyright", "this.options.copyright");
+
+        args.put("tmsoffset", "-1");
+        if (this.profile == EnumProfile.raster) {
+            args.put("rasterzoomlevels", this.tmaxz + 1);
+            args.put("rastermaxresolution", Math.pow(2, this.nativezoom) * this.out_gt[1]);
+        }
+        args.put("profile", this.profile);
+
+        try {
+            //初始化代码
+            ClasspathResourceLoader resourceLoader = new ClasspathResourceLoader("/");
+            //获取模板
+            GroupTemplate gt = new GroupTemplate(resourceLoader, Configuration.defaultConfiguration());
+            Template template = gt.getTemplate("openlayers2.html");
+            //渲染结果
+            template.binding(args);
+            String str = template.render();
+
+            //保存文本到文件
+            Path rootLocation = Paths.get(this.output_folder);
+            if (Files.notExists(rootLocation)) Files.createDirectories(rootLocation);
+            //data.js是文件
+            Path path = rootLocation.resolve("openlayers2.html");
+            byte[] strToBytes = str.getBytes();
+            Files.write(path, strToBytes);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
 
