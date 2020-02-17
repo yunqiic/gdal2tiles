@@ -40,26 +40,26 @@
                   map = new OpenLayers.Map(options);
 
                   // Create Google Mercator layers
-                  var gmap = new OpenLayers.Layer.Google("Google Streets",
-                  {
-                      type: google.maps.MapTypeId.ROADMAP,
-                      sphericalMercator: true
-                  });
-                  var gsat = new OpenLayers.Layer.Google("Google Satellite",
-                  {
-                      type: google.maps.MapTypeId.SATELLITE,
-                      sphericalMercator: true
-                  });
-                  var ghyb = new OpenLayers.Layer.Google("Google Hybrid",
-                  {
-                      type: google.maps.MapTypeId.HYBRID,
-                      sphericalMercator: true
-                  });
-                  var gter = new OpenLayers.Layer.Google("Google Terrain",
-                  {
-                      type: google.maps.MapTypeId.TERRAIN,
-                      sphericalMercator: true
-                  });
+                  // var gmap = new OpenLayers.Layer.Google("Google Streets",
+                  // {
+                  //     type: google.maps.MapTypeId.ROADMAP,
+                  //     sphericalMercator: true
+                  // });
+                  // var gsat = new OpenLayers.Layer.Google("Google Satellite",
+                  // {
+                  //     type: google.maps.MapTypeId.SATELLITE,
+                  //     sphericalMercator: true
+                  // });
+                  // var ghyb = new OpenLayers.Layer.Google("Google Hybrid",
+                  // {
+                  //     type: google.maps.MapTypeId.HYBRID,
+                  //     sphericalMercator: true
+                  // });
+                  // var gter = new OpenLayers.Layer.Google("Google Terrain",
+                  // {
+                  //     type: google.maps.MapTypeId.TERRAIN,
+                  //     sphericalMercator: true
+                  // });
 
                   // Create Bing layers
                   var broad = new OpenLayers.Layer.Bing({
@@ -98,8 +98,7 @@
                       tmsoverlay.setOpacity(0.7);
                   }
 
-                  map.addLayers([gmap, gsat, ghyb, gter,
-                                 broad, baer, bhyb,
+                  map.addLayers([broad, baer, bhyb,
                                  osm, tmsoverlay]);
 
                   var switcherControl = new OpenLayers.Control.LayerSwitcher();
@@ -151,7 +150,7 @@
                       div: "map",
                       controls: [],
                       maxExtent: new OpenLayers.Bounds(${west}, ${south}, ${east}, ${north}),
-                  maxResolution: ${rastermaxresolution},
+                      maxResolution: ${rastermaxresolution},
                       numZoomLevels: ${rasterzoomlevels}
               };
                   map = new OpenLayers.Map(options);

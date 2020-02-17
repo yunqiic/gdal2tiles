@@ -30,11 +30,18 @@
             bottom: 10px;
             left: 10px;
         }
+
+        #zoom {
+            position: fixed;
+            bottom: 30px;
+            left: 10px;
+        }
     </style>
 </head>
 <body>
 <div id="map" class="map"></div>
 <div id="mouse-position"></div>
+<div id="zoom"></div>
 <script>
     var mousePositionControl = new ol.control.MousePosition({
         coordinateFormat: ol.coordinate.createStringXY(4),
@@ -52,14 +59,6 @@
         target: 'map',
         layers: [
             new ol.layer.Tile({
-                extent: [102.33342909589446, 24.927098652553617, 102.33616855052723, 24.928682313276244],
-                source: new ol.source.XYZ({
-                    url: './{z}/{x}_{y}.png',
-                    minZoom: 17,
-                    maxZoom: 21,
-                }),
-            }),
-            new ol.layer.Tile({
                 source: new ol.source.XYZ({
                     url: "http://t{0-7}.tianditu.com/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9",
                     projection: "EPSG:4326"
@@ -73,11 +72,30 @@
             })
         ],
         view: new ol.View({
-            center: [102.33342909589446, 24.927098652553617],
-            zoom: 17,
+            //${west}, ${south}, ${east}, ${north}
+            center: [102.79632568359249, 24.98978658939942],
+            zoom: 18,
             projection: "EPSG:4326"
         })
     });
+
+    map.addLayer(
+        new ol.layer.Tile({
+            // extent: [102.74139404296749, 102.85125732421749, 24.952444759841278, 25.02712841895756],
+            source: new ol.source.XYZ({
+                tileUrlFunction: function (tileCoord) {
+                    var z = tileCoord[0];
+                    var x = tileCoord[1];
+                    y = Math.pow(2, z) + tileCoord[2] - 1;
+                    return './' + z + '/' + x + '_' + y + '.png';
+                },
+                projection: "EPSG:3857"
+            }),
+        }))
+
+    map.on("zoomend", function (event) {
+        console.log(event);
+    })
 </script>
 </body>
 </html>

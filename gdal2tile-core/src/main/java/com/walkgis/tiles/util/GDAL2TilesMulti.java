@@ -161,8 +161,13 @@ public class GDAL2TilesMulti {
                             int[] minxytmaxxy = tileJobInfo.tminmax.get(tz + 1);
                             if (x >= minxytmaxxy[0] && x <= minxytmaxxy[2] &&
                                     y >= minxytmaxxy[1] && y <= minxytmaxxy[3]) {
-                                Dataset dsquerytile = gdal.Open(output_folder + File.separator + ((int) (tz + 1)) + File.separator + String.format("%s_%s.%s", x, y, tileJobInfo.tileExtension), gdalconst.GA_ReadOnly);
-                                if (dsquerytile == null) return;
+                                File file = new File(output_folder + File.separator + ((tz + 1)) + File.separator + String.format("%s_%s.%s", x, y, tileJobInfo.tileExtension));
+                                if (!file.exists())
+                                    logger.debug(file.getAbsolutePath());
+
+                                Dataset dsquerytile = gdal.Open(file.getAbsolutePath(), gdalconst.GA_ReadOnly);
+                                if (dsquerytile == null)
+                                    continue;
                                 int tileposy, tileposx;
                                 if ((ty == 0 && y == 1) ||
                                         (ty != 0 && (y % (2 * ty)) != 0)) {

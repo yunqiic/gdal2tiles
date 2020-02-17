@@ -3,13 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'/>
-    <title>${htmltitle}</title>
+    <title>${title}</title>
 
     <!-- Leaflet -->
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css"/>
     <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
 
     <style>
+
         body {
             margin: 0;
             padding: 0;
@@ -54,39 +55,16 @@
 <div id="map"></div>
 
 <script>
-    var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}_{y}.png', {
-        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom}
-    });
 
-    var tdtVect = L.tileLayer('http://t{0-7}.tianditu.com/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9', {
+    var tdtVect = L.tileLayer('http://t0.tianditu.com/DataServer?T=vec_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9', {
         attribution: "",
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom}
     });
-    var tdtLabel = L.tileLayer('http://t{0-7}.tianditu.com/DataServer?T=cva_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9', {
+    var tdtLabel = L.tileLayer('http://t0.tianditu.com/DataServer?T=cva_c&x={x}&y={y}&l={z}&tk=21c5b8a6b48bd60d97514459b2ca73d9', {
         attribution: "",
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom}
     });
 
-    var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}_{y}.png', {
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom}
-    });
-
-    var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}_{y}.png', {
-        attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom}
-    });
-
-    var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom}
-    });
+    var tdt = L.layerGroup([tdtVect, tdtLabel]);
+    var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {});
 
     var lyr = L.tileLayer('./{z}/{x}_{y}.${tileformat}', {
         tms: true,
@@ -99,17 +77,11 @@
     var map = L.map('map', {
         center: [${centerlon}, ${centerlat}],
         zoom: ${beginzoom},
-        minZoom: ${minzoom},
-        maxZoom: ${maxzoom},
-        layers: [osm]
+        layers: [tdt]
     });
 
     var basemaps = {
-        "OpenStreetMap": osm,
-        "CartoDB Positron": cartodb,
-        "Stamen Toner": toner,
-        "天地图": tdtVect,
-        "天地图标注": tdtLabel,
+        "天地图": tdt,
         "Without background": white
     }
     var overlaymaps = {"Layer": lyr}
