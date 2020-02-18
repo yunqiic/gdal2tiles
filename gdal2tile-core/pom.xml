@@ -69,10 +69,17 @@
             <version>1.4</version>
         </dependency>
 
+        <!--        用来渲染前端HTML页面-->
         <dependency>
             <groupId>com.ibeetl</groupId>
             <artifactId>beetl</artifactId>
             <version>3.0.11.RELEASE</version>
+        </dependency>
+        <!--用来操作VRT-->
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>1.6.1</version>
         </dependency>
     </dependencies>
 

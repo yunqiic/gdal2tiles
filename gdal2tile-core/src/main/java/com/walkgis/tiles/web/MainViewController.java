@@ -1,18 +1,17 @@
 package com.walkgis.tiles.web;
 
 import com.walkgis.tiles.MainApp;
-import com.walkgis.tiles.util.GDAL2TilesMulti;
+import com.walkgis.tiles.util.*;
+import com.walkgis.tiles.util.ProgressBar;
 import com.walkgis.tiles.view.AdvanceSettingView;
 import com.walkgis.tiles.view.CusPanel;
 import com.walkgis.tiles.entity.FileItem;
-import com.walkgis.tiles.util.EnumProfile;
-import com.walkgis.tiles.util.EnumResampling;
-import com.walkgis.tiles.util.GDAL2Tiles;
 import com.walkgis.tiles.view.ReviewView;
 import de.felixroske.jfxsupport.AbstractFxmlView;
 import de.felixroske.jfxsupport.FXMLController;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -28,22 +27,27 @@ import javafx.stage.Stage;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
-import org.gdal.ogr.ogr;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
-
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.*;
 
 
 @FXMLController
 public class MainViewController implements Initializable {
+    private static final Logger logger = LoggerFactory.getLogger(MainViewController.class);
+
+    private ExecutorService service = Executors.newFixedThreadPool(1);
+
     @Value(value = "${defaultDir}")
     private String defaultDir;
     @Autowired
@@ -65,7 +69,9 @@ public class MainViewController implements Initializable {
     @FXML
     private ListView listViewFiles;
     @FXML
-    private Label transform, projection;
+    private Label transform, projection, lblProgressTop, lblProgressRate, lblProgressBottom;
+    @FXML
+    public javafx.scene.control.ProgressBar probressBar;
     @FXML
     private ComboBox cmbZoomFrom, cmbZoomTo;
 
@@ -117,7 +123,6 @@ public class MainViewController implements Initializable {
     @FXML
     private void panelOutputDirClick(MouseEvent event) {
         generateDirTiles();
-        navicateToProgressPanel();
     }
 
     @FXML
@@ -275,7 +280,6 @@ public class MainViewController implements Initializable {
             cmbZoomFrom.getSelectionModel().select(0);
             cmbZoomTo.getSelectionModel().select(0);
             generateDirTiles();
-            navicateToProgressPanel();
         } else if (cusPanel.getId().equals("panelProgress")) {
 
         }
@@ -343,37 +347,70 @@ public class MainViewController implements Initializable {
                 return;
             }
             FileItem fileItem = (FileItem) listViewFiles.getItems().get(0);
-            generateTile(fileItem.getFile(), file);
+
+            navicateToProgressPanel();
+
+            RunTask task = new RunTask(fileItem.getFile().getAbsolutePath(), file.getAbsolutePath());
+
+            probressBar.progressProperty().unbind();
+            probressBar.progressProperty().bind(task.progressProperty());
+
+            task.call();
         }
     }
 
-    public void generateTile(File fileInput, File fileOutput) {
-        String[] args = "-profile geodetic E:\\Data\\CAOBAO\\aaa.tif E:\\Data\\CAOBAO\\tiles\\java".split(" ");
-        gdal.AllRegister();
-        // 注册所有的驱动
-        ogr.RegisterAll();
-        // 为了支持中文路径，请添加下面这句代码
-        gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
-        // 为了使属性表字段支持中文，请添加下面这句
-        gdal.SetConfigOption("SHAPE_ENCODING", "");
-        gdal.SetConfigOption("GDAL_DATA", "gdal-data");
-        try {
-//                GDAL2Tiles gdal2tiles = new GDAL2Tiles();
-//                gdal2tiles.setInput(fileInput.getAbsolutePath());
-//                gdal2tiles.setOutput(fileOutput.getAbsolutePath());
-//                gdal2tiles.setResampling(EnumResampling.GRA_Average);
-//                gdal2tiles.setProfile(EnumProfile.mercator);
-//                gdal2tiles.process(null);
+    private void single_threaded_tiling(String input_file, String output_folder, OptionObj options) throws Exception {
+        List<TileDetail> tile_details = new ArrayList<>();
+        TileJobInfo conf = CommonUtils.worker_tile_details(input_file, output_folder, options, tile_details);
 
-            GDAL2TilesMulti gdal2tiles = new GDAL2TilesMulti();
-            gdal2tiles.setInput(fileInput.getAbsolutePath());
-            gdal2tiles.setOutput(fileOutput.getAbsolutePath());
-            gdal2tiles.setResampling(EnumResampling.GRA_Average);
-            gdal2tiles.setProfile(EnumProfile.mercator);
-            gdal2tiles.process(null);
-        } catch (IOException e) {
+        logger.debug("Tiles details calc complete.");
+
+        ProgressBar progress_bar = new ProgressBar(tile_details.size(), probressBar);
+        progress_bar.start();
+
+        for (TileDetail tileDetail : tile_details) {
+            CommonUtils.create_base_tile(conf, tileDetail);
+            progress_bar.log_progress();
+        }
+
+        CommonUtils.cachedDs = null;
+
+        CommonUtils.create_overview_tiles(conf, output_folder, options, probressBar);
+    }
+
+    private void multi_threaded_tiling(String input_file, String output_folder, OptionObj options) {
+        int nb_processes = options.nb_processes == null ? 1 : options.nb_processes;
+        gdal.SetConfigOption("GDAL_CACHEMAX", String.valueOf(gdal.GetCacheMax() / nb_processes));
+
+        service = Executors.newFixedThreadPool(nb_processes, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+
+        List<TileDetail> tile_details = new ArrayList<>();
+
+        try {
+            TileJobInfo conf = CommonUtils.worker_tile_details(input_file, output_folder, options, tile_details);
+
+            ProgressBar progress_bar = new ProgressBar(tile_details.size(), probressBar);
+            progress_bar.start();
+            for (int i = 0; i < tile_details.size(); i++) {
+                service.execute(new CommonUtils.BaseTileTask(conf, tile_details.get(i)));
+                progress_bar.log_progress();
+            }
+
+            service.shutdown();
+            try {
+                service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                CommonUtils.create_overview_tiles(conf, output_folder, options, probressBar);
+            }
+        } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (SQLException e) {
+        } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
@@ -405,4 +442,29 @@ public class MainViewController implements Initializable {
         return this.listViewFiles.getSelectionModel().getSelectedItem();
     }
 
+    public class RunTask extends Task<Void> {
+        private String input_file;
+        private String output_folder;
+
+        public RunTask(String input_file, String output_folder) {
+            this.input_file = input_file;
+            this.output_folder = output_folder;
+        }
+
+        @Override
+        protected Void call() {
+            OptionObj options = new OptionObj();
+            options.nb_processes = 8;
+            try {
+                if (options.nb_processes == 1) {
+                    single_threaded_tiling(input_file, output_folder, options);
+                } else {
+                    multi_threaded_tiling(input_file, output_folder, options);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
 }

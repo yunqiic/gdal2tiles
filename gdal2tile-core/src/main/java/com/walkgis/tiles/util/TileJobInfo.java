@@ -1,9 +1,7 @@
 package com.walkgis.tiles.util;
 
-import org.gdal.gdal.Driver;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Plain object to hold tile job configuration for a dataset
@@ -23,10 +21,15 @@ public class TileJobInfo {
     public double[] outGeoTrans;
     public double ominy;
     public Boolean isEpsg4326 = false;
-    public Map<String, Object> options = null;
-    public Boolean excludeTransparent = false;
+    public OptionObj options = null;
+    public boolean excludeTransparent = false;
 
-    public TileJobInfo(String srcFile, Integer nbDataBands, String outputFilePath, String tileExtension, Integer tileSize, String tileDriver, Boolean kml, List<int[]> tminmax, Integer tminz, Integer tmaxz, String inSrsWkt, double[] outGeoTrans, Double ominy, Boolean isEpsg4326, Map<String, Object> options, Boolean excludeTransparent) {
+
+    public TileJobInfo(String srcFile, Integer nbDataBands, String outputFilePath,
+                       String tileExtension, String tileDriver, int tileSize,
+                       boolean kml, List<int[]> tminmax, int tminz, int tmaxz,
+                       String inSrsWkt, double[] outGeoTrans, double ominy,
+                       boolean isEpsg4326, OptionObj options, boolean excludeTransparent) {
         this.srcFile = srcFile;
         this.nbDataBands = nbDataBands;
         this.outputFilePath = outputFilePath;

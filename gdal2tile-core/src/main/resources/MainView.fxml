@@ -60,7 +60,7 @@
                         <Label fx:id="lblProgressTop" text="Label" />
                         <HBox alignment="CENTER">
                            <children>
-                              <ProgressBar prefHeight="30.0" prefWidth="824.0" progress="0.0" />
+                              <ProgressBar fx:id="probressBar" prefHeight="30.0" prefWidth="824.0" progress="0.0" />
                               <Label fx:id="lblProgressRate" text="Label" />
                            </children>
                         </HBox>

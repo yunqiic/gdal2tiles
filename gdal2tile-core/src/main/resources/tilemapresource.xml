@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
+    <Title>%(title)s</Title>
+    <Abstract></Abstract>
+    <SRS>%(srs)s</SRS>
+    <BoundingBox minx="%(west).14f" miny="%(south).14f" maxx="%(east).14f" maxy="%(north).14f"/>
+    <Origin x="%(west).14f" y="%(south).14f"/>
+    <TileFormat width="%(tile_size)d" height="%(tile_size)d" mime-type="image/%(tileformat)s"
+                extension="%(tileformat)s"/>
+    <TileSets profile="%(profile)s">
+        <%
+            for(var z= tminz;z<(tmaxz+1);i++){
+                if(options.profile=='raster'){
+                    <TileSet href="${publishurl}${z}" units-per-pixel="${(2**(nativezoom - z) * out_gt[1])}" order="${z}"/>
+                } else if(options.profile=='mercator'){
+                    <TileSet href="${publishurl}${z}" units-per-pixel="${156543.0339 / 2**z}" order="${z}"/>
+                }else if(options.profile=='geodetic'){
+                    <TileSet href=${publishurl}${z}" units-per-pixel="${0.703125 / 2**z}" order="${z}"/>
+                }
+            }
+        %>
+    </TileSets>
+</TileMap>
