@@ -62,7 +62,6 @@
             <url>http://repo.boundlessgeo.com/main</url>
         </repository>
     </repositories>
-
     <build>
         <plugins>
             <plugin>
