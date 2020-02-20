@@ -12,7 +12,6 @@ import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -57,6 +56,7 @@ public class ReviewViewController implements Initializable {
                 temp.deleteOnExit();
                 pngDriver.CreateCopy(temp.getAbsolutePath(), dstile, 0);
                 Image image = ImageIO.read(temp);
+
                 imageView.setImage(SwingFXUtils.toFXImage((BufferedImage) image, null));
                 dstile.delete();
             } catch (IOException e) {

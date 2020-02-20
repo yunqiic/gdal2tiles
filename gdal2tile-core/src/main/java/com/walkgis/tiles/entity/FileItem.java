@@ -4,8 +4,6 @@ package com.walkgis.tiles.entity;
 import javafx.beans.property.SimpleStringProperty;
 import org.gdal.gdal.Dataset;
 import org.locationtech.jts.geom.Envelope;
-import org.sqlite.util.StringUtils;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -99,9 +97,9 @@ public class FileItem {
 
         List<String> res = Arrays.stream(transformDouble).mapToObj(a -> String.format("%.9f", a)).collect(Collectors.toList());
         String transformStr = "";
-        transformStr += StringUtils.join(res.subList(0, 3), " ");
+        transformStr += String.join(" ", res.subList(0, 3));
         transformStr += "\n";
-        transformStr += StringUtils.join(res.subList(3, 6), " ");
+        transformStr += String.join(" ", res.subList(3, 6));
         setTransform(transformStr);
     }
 

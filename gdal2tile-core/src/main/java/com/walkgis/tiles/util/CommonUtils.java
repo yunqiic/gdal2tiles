@@ -1,7 +1,6 @@
 package com.walkgis.tiles.util;
 
 import ch.qos.logback.core.util.FileUtil;
-import com.walkgis.tiles.web.MainViewController;
 import javafx.concurrent.Task;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
@@ -14,8 +13,6 @@ import org.gdal.osr.SpatialReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
-import sun.nio.ch.IOUtil;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +20,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 public class CommonUtils {
@@ -153,7 +149,7 @@ public class CommonUtils {
 
         Dataset corrected_dataset = gdal.Open(vrt_string);
 
-        corrected_dataset.SetMetadataItem("NODATA_VALUES", org.sqlite.util.StringUtils.join(Arrays.stream(nodata_values).map(k -> k.toString()).collect(Collectors.toList()), " "));
+        corrected_dataset.SetMetadataItem("NODATA_VALUES", String.join(" ", Arrays.stream(nodata_values).map(k -> k.toString()).collect(Collectors.toList())));
 
         if (options != null) {
 
@@ -167,7 +163,7 @@ public class CommonUtils {
         try {
             file = File.createTempFile(UUID.randomUUID().toString(), "vrt", new File(System.getProperty("java.io.tmpdir")));
             dataset.GetDriver().CreateCopy(file.getAbsolutePath(), dataset);
-            return org.sqlite.util.StringUtils.join(Files.readAllLines(Paths.get(file.getAbsolutePath())), "");
+            return String.join("", Files.readAllLines(Paths.get(file.getAbsolutePath())));
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
