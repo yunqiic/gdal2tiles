@@ -75,6 +75,11 @@ public class MainViewController implements Initializable {
     @FXML
     private ComboBox cmbZoomFrom, cmbZoomTo;
 
+    @FXML
+    private void panelOutputGeopackageClick(MouseEvent event) {
+
+    }
+
     public FileItem fileItem;
 
     @Override
@@ -108,11 +113,6 @@ public class MainViewController implements Initializable {
             this.projection.setText("");
             this.transform.setText("");
         }
-    }
-
-    @FXML
-    private void panelOutputGeopackageClick(MouseEvent event) {
-
     }
 
     @FXML
