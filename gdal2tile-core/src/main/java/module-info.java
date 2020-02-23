@@ -1,25 +1,18 @@
-/**
- *
- */
 module gdal2tile.core {
-    requires gdal;
-    requires org.locationtech.jts;
-    requires javafx.base;
-    requires springboot.javafx.support;
+    exports com.walkgis.tiles;
     requires javafx.graphics;
-    requires spring.boot.autoconfigure;
-    requires spring.context;
-    requires slf4j.api;
-    requires spring.beans;
-    requires spring.core;
+    requires springboot.javafx;
     requires javafx.fxml;
+    requires javafx.swing;
+    requires gdal;
+    requires spring.beans;
     requires javafx.controls;
+    requires slf4j.api;
+    requires spring.core;
+    requires spring.context;
+    requires spring.boot.autoconfigure;
     requires java.sql;
     requires beetl;
-    requires logback.core;
-    requires java.desktop;
-    requires javafx.swing;
-    requires spring.jcl;
-    requires dom4j;
-    exports com.walkgis.tiles;
+    requires org.locationtech.jts;
+    opens com.walkgis.tiles to javafx.base,java.base;
 }

@@ -1,9 +1,6 @@
 package com.walkgis.tiles.util;
 
-import ch.qos.logback.core.util.FileUtil;
 import javafx.concurrent.Task;
-import org.dom4j.*;
-import org.dom4j.io.SAXReader;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
@@ -13,10 +10,19 @@ import org.gdal.osr.SpatialReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -175,24 +181,44 @@ public class CommonUtils {
     private static String add_gdal_warp_options_to_string(String vrt_string, Map<String, String> warp_options) {
         if (warp_options == null || warp_options.size() == 0)
             return vrt_string;
-        SAXReader reader = new SAXReader();
-        Document document = null;
-        try {
-            document = reader.read(new ByteArrayInputStream(vrt_string.getBytes("UTF-8")));
-            Element rootElement = document.getRootElement();
+        //创建一个DocumentBuilderFactory的对象
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 
-            Element element = rootElement.element("GDALWarpOptions");
-            if (element == null) return vrt_string;
+        try {
+            //创建DocumentBuilder对象
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            //通过DocumentBuilder对象的parser方法加载books.xml文件到当前项目下
+            Document document = db.parse(new StringBufferInputStream(vrt_string));
+
+            //获取所有book节点的集合
+            NodeList bookList = document.getElementsByTagName("GDALWarpOptions");
+            if (bookList == null || bookList.getLength() == 0) return vrt_string;
+            Node gdalWarpOptions = bookList.item(0);
 
             for (Map.Entry<String, String> entry : warp_options.entrySet()) {
-                Element optionEle = element.addElement("Option");
-                optionEle.addText(entry.getValue());
-                optionEle.addAttribute("name", entry.getKey());
+                Element optionNode = document.createElement("Option");
+                optionNode.setTextContent(entry.getValue());
+                optionNode.setAttribute("name", entry.getKey());
+                gdalWarpOptions.appendChild(optionNode);
             }
-            return document.asXML();
-        } catch (DocumentException e) {
-            e.printStackTrace();
+
+            DOMSource source = new DOMSource(document);
+            StringWriter writer = new StringWriter();
+            Result result = new StreamResult(writer);
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.transform(source, result);
+            return writer.toString();
         } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
             e.printStackTrace();
         }
 
@@ -222,25 +248,29 @@ public class CommonUtils {
     }
 
     private static String add_alpha_band_to_string_vrt(String vrt_string) {
-        SAXReader reader = new SAXReader();
-        Document document = null;
-
+        //创建一个DocumentBuilderFactory的对象
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         int index = 0;
         int nb_bands = 0;
-
         try {
-            document = reader.read(new ByteArrayInputStream(vrt_string.getBytes("UTF-8")));
-            Element rootElement = document.getRootElement();
+            //创建DocumentBuilder对象
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            //通过DocumentBuilder对象的parser方法加载books.xml文件到当前项目下
+            Document document = db.parse(new StringBufferInputStream(vrt_string));
 
-            Iterator iterator = rootElement.elementIterator();
-            while (iterator.hasNext()) {
-                Element element = (Element) iterator.next();
+            NodeList children = document.getChildNodes();
+            Element rootElement = (Element) children.item(0);
 
-                if (element.getName().equalsIgnoreCase("VRTRasterBand")) {
+            for (int i = 0; i < rootElement.getChildNodes().getLength(); i++) {
+                Element element = (Element) children.item(i);
+                if (element.getNodeName().equalsIgnoreCase("VRTRasterBand")) {
                     nb_bands += 1;
-                    Node color_node = element.element("ColorInterp");
-                    if (color_node != null && color_node.getName().equalsIgnoreCase("Alpha"))
-                        throw new Exception("Alpha band already present");
+                    NodeList color_nodes = element.getElementsByTagName("ColorInterp");
+                    if (color_nodes.getLength() > 0) {
+                        Element color_node = (Element) color_nodes.item(0);
+                        if (color_node.getElementsByTagName("Alpha").getLength() > 0)
+                            throw new Exception("Alpha band already present");
+                    }
                 } else {
                     if (nb_bands != 0)
                         break;
@@ -248,26 +278,38 @@ public class CommonUtils {
                 index += 1;
             }
 
+            Element bandEle = document.createElement("VRTRasterBand");
+            bandEle.setAttribute("dataType", "Byte");
+            bandEle.setAttribute("band", String.valueOf((nb_bands + 1)));
+            bandEle.setAttribute("subClass", "VRTWarpedRasterBand");
+            rootElement.appendChild(bandEle);
 
-            Element bandEle = rootElement.addElement("VRTRasterBand");
-            bandEle.addAttribute("dataType", "Byte");
-            bandEle.addAttribute("band", String.valueOf((nb_bands + 1)));
-            bandEle.addAttribute("subClass", "VRTWarpedRasterBand");
+            Element colorEle = document.createElement("ColorInterp");
+            colorEle.setTextContent("Alpha");
+            bandEle.appendChild(colorEle);
 
-            Element colorEle = bandEle.addElement("ColorInterp");
-            colorEle.setText("Alpha");
+            NodeList gdalWarpOptions = rootElement.getElementsByTagName("GDALWarpOptions");
+            Element gdalWarpEle = (Element) gdalWarpOptions.item(0);
+            Element alphaBandEle = document.createElement("DstAlphaBand");
+            alphaBandEle.setTextContent(String.valueOf(nb_bands + 1));
+            gdalWarpEle.appendChild(alphaBandEle);
 
+            Element optionEle = document.createElement("Option");
+            optionEle.setAttribute("name", "INIT_DEST");
+            optionEle.setTextContent("0");
+            gdalWarpEle.appendChild(optionEle);
 
-            Element gdalWarpEle = rootElement.element("GDALWarpOptions");
-            Element alphaBandEle = gdalWarpEle.addElement("DstAlphaBand");
-            alphaBandEle.setText(String.valueOf(nb_bands + 1));
-
-            Element optionEle = gdalWarpEle.addElement("Option");
-            optionEle.addAttribute("name", "INIT_DEST");
-            optionEle.setText("0");
-
-            return document.asXML();
-        } catch (DocumentException e) {
+            DOMSource source = new DOMSource(document);
+            StringWriter writer = new StringWriter();
+            Result result = new StreamResult(writer);
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.transform(source, result);
+            return writer.toString();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
@@ -338,7 +380,7 @@ public class CommonUtils {
                         continue;
                     }
 
-                    FileUtil.createMissingParentDirectories(new File(tilefilename));
+                    new File(tilefilename).mkdirs();
 
                     Dataset dsquery = mem_driver.Create("", 2 * tileJobInfo.tileSize, 2 * tileJobInfo.tileSize, tilebands);
                     Dataset dstile = mem_driver.Create("", tileJobInfo.tileSize, tileJobInfo.tileSize, tilebands);
@@ -439,7 +481,8 @@ public class CommonUtils {
 
 
         String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
-        FileUtil.createMissingParentDirectories(new File(tilefilename));
+        new File(tilefilename).mkdirs();
+//        FileUtil.createMissingParentDirectories(new File(tilefilename));
 
         Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
 

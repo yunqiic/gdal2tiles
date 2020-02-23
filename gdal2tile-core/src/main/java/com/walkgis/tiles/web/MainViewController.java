@@ -1,5 +1,7 @@
 package com.walkgis.tiles.web;
 
+import com.walkgis.bootfx.AbstractFxmlView;
+import com.walkgis.bootfx.FXMLController;
 import com.walkgis.tiles.MainApp;
 import com.walkgis.tiles.util.*;
 import com.walkgis.tiles.util.ProgressBar;
@@ -7,8 +9,6 @@ import com.walkgis.tiles.view.AdvanceSettingView;
 import com.walkgis.tiles.view.CusPanel;
 import com.walkgis.tiles.entity.FileItem;
 import com.walkgis.tiles.view.ReviewView;
-import de.felixroske.jfxsupport.AbstractFxmlView;
-import de.felixroske.jfxsupport.FXMLController;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;

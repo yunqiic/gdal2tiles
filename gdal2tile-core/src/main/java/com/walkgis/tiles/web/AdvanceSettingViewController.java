@@ -1,6 +1,6 @@
 package com.walkgis.tiles.web;
 
-import de.felixroske.jfxsupport.FXMLController;
+import com.walkgis.bootfx.FXMLController;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import java.net.URL;

@@ -1,7 +1,7 @@
 package com.walkgis.tiles.view;
 
 
-import de.felixroske.jfxsupport.SplashScreen;
+import com.walkgis.bootfx.SplashScreen;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.image.ImageView;
