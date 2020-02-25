@@ -17,7 +17,6 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -98,10 +97,10 @@ public class GDAL2TilesTemp {
 
         this.tminz = 0;
         this.tmaxz = 0;
-        if (!StringUtils.isEmpty(options.zoom)) {
+        if (!(options.zoom == null || "".equals(options.zoom))) {
             String zoom_min = this.options.zoom.split("-")[0];
             String zoom_max = this.options.zoom.split("-").length > 1 ? this.options.zoom.split("-")[1] : "";
-            if (!StringUtils.isEmpty(zoom_max))
+            if (!(zoom_max==null||"".equals(zoom_max)))
                 this.tmaxz = Integer.parseInt(zoom_max);
             else this.tmaxz = Integer.parseInt(zoom_min);
         }
@@ -279,7 +278,7 @@ public class GDAL2TilesTemp {
                 this.tminmax.add(tz, new int[]{tminxy[0], tminxy[1], tmaxxy[0], tmaxxy[1]});
             }
 
-            if (this.kml && !StringUtils.isEmpty(this.in_srs_wkt)) {
+            if (this.kml && !(this.in_srs_wkt==null||"".equals(this.in_srs_wkt))) {
                 CoordinateTransformation ct = osr.CreateCoordinateTransformation(in_srs, srs4326);
 
             }
@@ -537,7 +536,7 @@ public class GDAL2TilesTemp {
             args.put("srs", "EPSG:3857");
         else if (this.options.profile.equalsIgnoreCase("geodetic"))
             args.put("srs", "EPSG:4326");
-        else if (!StringUtils.isEmpty(this.options.s_srs))
+        else if (!(this.options.s_srs==null||"".equals(this.options.s_srs)))
             args.put("srs", this.options.s_srs);
         else if (this.out_srs != null)
             args.put("srs", this.out_srs.ExportToWkt());

@@ -9,7 +9,7 @@
         <ImageView fx:id="imageView" fitHeight="293.0" fitWidth="518.0" layoutY="1.0" pickOnBounds="true"
                    preserveRatio="true">
             <image>
-                <Image url="@../img/bg.jpg"/>
+                <Image url="@../../../img/bg.jpg"/>
             </image>
         </ImageView>
     </children>

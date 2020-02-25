@@ -9,13 +9,11 @@ import org.gdal.gdalconst.gdalconst;
 import org.gdal.osr.SpatialReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -72,15 +70,16 @@ public class CommonUtils {
      */
     public static String setup_input_srs(Dataset input_dataset, OptionObj options, SpatialReference input_srs) {
         String input_srs_wkt = "";
-        if (!StringUtils.isEmpty(options.s_srs)) {
+        if (!(options.s_srs==null||"".equals(options.s_srs))) {
 //            input_srs = new SpatialReference();
             input_srs.SetFromUserInput(options.s_srs);
             input_srs_wkt = input_srs.ExportToWkt();
         } else {
             input_srs_wkt = input_dataset.GetProjection();
-            if (!StringUtils.isEmpty(input_srs_wkt) && input_dataset.GetGCPCount() != 0)
+
+            if (!(input_srs_wkt==null||"".equals(input_srs_wkt)) && input_dataset.GetGCPCount() != 0)
                 input_srs_wkt = input_dataset.GetGCPProjection();
-            if (!StringUtils.isEmpty(input_srs_wkt)) {
+            if (!(input_srs_wkt==null||"".equals(input_srs_wkt))) {
 //                input_srs = new SpatialReference();
                 input_srs.SetFromUserInput(input_srs_wkt);
             }

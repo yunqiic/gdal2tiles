@@ -1,14 +1,11 @@
 package com.walkgis.tiles.web;
 
-import com.walkgis.bootfx.AbstractFxmlView;
-import com.walkgis.bootfx.FXMLController;
 import com.walkgis.tiles.MainApp;
 import com.walkgis.tiles.util.*;
 import com.walkgis.tiles.util.ProgressBar;
 import com.walkgis.tiles.view.AdvanceSettingView;
 import com.walkgis.tiles.view.CusPanel;
 import com.walkgis.tiles.entity.FileItem;
-import com.walkgis.tiles.view.ReviewView;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -29,10 +26,7 @@ import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.StringUtils;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -42,19 +36,13 @@ import java.util.ResourceBundle;
 import java.util.concurrent.*;
 
 
-@FXMLController
 public class MainViewController implements Initializable {
     private static final Logger logger = LoggerFactory.getLogger(MainViewController.class);
 
     private ExecutorService service = Executors.newFixedThreadPool(1);
 
-    @Value(value = "${defaultDir}")
     private String defaultDir;
-    @Autowired
-    private ApplicationContext applicationContext;
-    @Autowired
     private ReviewViewController reviewViewController;
-    @Autowired
     private AdvanceSettingViewController advanceSettingViewController;
     @FXML
     private AnchorPane panelStandard, panelGoogle, panelRaster, panelAdvance;
@@ -127,21 +115,21 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void btnSettingAdvanceClick(MouseEvent event) {
-        AbstractFxmlView view = applicationContext.getBean(AdvanceSettingView.class);
-        Stage newStage = new Stage();
-        Scene newScene;
-        if (view.getView().getScene() != null) {
-            newScene = view.getView().getScene();
-        } else {
-            newScene = new Scene(view.getView());
-        }
-
-        newStage.setScene(newScene);
-        newStage.initModality(Modality.NONE);
-        newStage.initOwner(MainApp.getStage());
-        newStage.show();
-
-        advanceSettingViewController.init();
+//        AbstractFxmlView view = applicationContext.getBean(AdvanceSettingView.class);
+//        Stage newStage = new Stage();
+//        Scene newScene;
+//        if (view.getView().getScene() != null) {
+//            newScene = view.getView().getScene();
+//        } else {
+//            newScene = new Scene(view.getView());
+//        }
+//
+//        newStage.setScene(newScene);
+//        newStage.initModality(Modality.NONE);
+//        newStage.initOwner(MainApp.getStage());
+//        newStage.show();
+//
+//        advanceSettingViewController.init();
     }
 
     @FXML
@@ -149,7 +137,7 @@ public class MainViewController implements Initializable {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择数据");
         Stage selectFile = new Stage();
-        if (StringUtils.isEmpty(defaultDir))
+        if ((defaultDir == null || "".equals(defaultDir)))
             defaultDir = System.getProperty("user.home");
         fileChooser.setInitialDirectory(new File(defaultDir));
 
@@ -182,7 +170,8 @@ public class MainViewController implements Initializable {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择数据");
         Stage selectFile = new Stage();
-        if (StringUtils.isEmpty(defaultDir))
+
+        if ((defaultDir == null || "".equals(defaultDir)))
             defaultDir = System.getProperty("user.home");
         fileChooser.setInitialDirectory(new File(defaultDir));
 
@@ -299,21 +288,21 @@ public class MainViewController implements Initializable {
 
     @FXML
     private void btnReviewClick(MouseEvent event) {
-        AbstractFxmlView view = applicationContext.getBean(ReviewView.class);
-        Stage newStage = new Stage();
-        Scene newScene;
-        if (view.getView().getScene() != null) {
-            newScene = view.getView().getScene();
-        } else {
-            newScene = new Scene(view.getView());
-        }
-
-        newStage.setScene(newScene);
-        newStage.initModality(Modality.NONE);
-        newStage.initOwner(MainApp.getStage());
-        newStage.show();
-
-        reviewViewController.showReview();
+//        AbstractFxmlView view = applicationContext.getBean(ReviewView.class);
+//        Stage newStage = new Stage();
+//        Scene newScene;
+//        if (view.getView().getScene() != null) {
+//            newScene = view.getView().getScene();
+//        } else {
+//            newScene = new Scene(view.getView());
+//        }
+//
+//        newStage.setScene(newScene);
+//        newStage.initModality(Modality.NONE);
+//        newStage.initOwner(MainApp.getStage());
+//        newStage.show();
+//
+//        reviewViewController.showReview();
     }
 
     private void navicateToProgressPanel() {
@@ -331,7 +320,7 @@ public class MainViewController implements Initializable {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("选择保存的位置");
         Stage selectFile = new Stage();
-        if (StringUtils.isEmpty(defaultDir))
+        if ((defaultDir == null || "".equals(defaultDir)))
             defaultDir = System.getProperty("user.home");
         directoryChooser.setInitialDirectory(new File(defaultDir));
 

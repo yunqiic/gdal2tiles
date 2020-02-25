@@ -4,36 +4,31 @@
  */
 package com.walkgis.tiles;
 
-import com.walkgis.bootfx.AbstractJavaFxApplicationSupport;
-import com.walkgis.tiles.view.DemoSplash;
-import com.walkgis.tiles.view.MainView;
-import javafx.scene.image.Image;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.io.IOException;
 
-@SpringBootApplication
-public class MainApp extends AbstractJavaFxApplicationSupport {
-
-    public static void main(String[] args) {
-        launch(MainApp.class, MainView.class, new DemoSplash(), args);
-    }
+public class MainApp extends Application {
+    private static Scene scene;
 
     @Override
-    public void beforeInitialView(Stage stage, ConfigurableApplicationContext ctx) {
-        stage.setTitle("地图切片");
+    public void start(Stage stage) throws Exception {
+        scene = new Scene(loadFXML("MainView"));
+        scene.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
+        stage.setScene(scene);
+        stage.show();
     }
 
-    public Collection<Image> loadDefaultIcons() {
-        return Arrays.asList(
-                new Image(this.getClass().getResource("/icons/gear_16x16.png").toExternalForm()),
-                new Image(this.getClass().getResource("/icons/gear_24x24.png").toExternalForm()),
-                new Image(this.getClass().getResource("/icons/gear_36x36.png").toExternalForm()),
-                new Image(this.getClass().getResource("/icons/gear_42x42.png").toExternalForm()),
-                new Image(this.getClass().getResource("/icons/gear_64x64.png").toExternalForm())
-        );
+    public static void setRoot(String fxml) throws IOException {
+        scene.setRoot(loadFXML(fxml));
+    }
+
+    private static Parent loadFXML(String fxml) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource(fxml + ".fxml"));
+        return fxmlLoader.load();
     }
 }

@@ -89,7 +89,7 @@
                                             <children>
                                                 <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                                     <image>
-                                                        <Image url="@img/outputDir.png" />
+                                                        <Image url="@../../../img/outputDir.png" />
                                                     </image>
                                                 </ImageView>
                                                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0">
@@ -118,7 +118,7 @@
                                             <children>
                                                 <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                                     <image>
-                                                        <Image url="@img/outputMbtiles.png" />
+                                                        <Image url="@../../../img/outputMbtiles.png" />
                                                     </image>
                                                 </ImageView>
                                                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0">
@@ -147,7 +147,7 @@
                                             <children>
                                                 <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                                     <image>
-                                                        <Image url="@img/outputGeopackage.png" />
+                                                        <Image url="@../../../img/outputGeopackage.png" />
                                                     </image>
                                                 </ImageView>
                                                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0">
@@ -224,7 +224,7 @@
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                             <image>
-                                                <Image url="@img/device.png" />
+                                                <Image url="@../../../img/device.png" />
                                             </image>
                                         </ImageView>
                                         <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0">
@@ -243,7 +243,7 @@
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                             <image>
-                                                <Image url="@img/google.png" />
+                                                <Image url="@../../../img/google.png" />
                                             </image>
                                         </ImageView>
                                         <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0" prefHeight="118.0" prefWidth="200.0">
@@ -258,7 +258,7 @@
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                             <image>
-                                                <Image url="@img/grid.png" />
+                                                <Image url="@../../../img/grid.png" />
                                             </image>
                                         </ImageView>
                                         <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0">
@@ -273,7 +273,7 @@
                                     <children>
                                         <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
                                             <image>
-                                                <Image url="@img/raster.png" />
+                                                <Image url="@../../../img/raster.png" />
                                             </image>
                                         </ImageView>
                                         <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0">
@@ -306,6 +306,6 @@
         </Pane>
     </children>
     <stylesheets>
-        <URL value="@css/MainView.css" />
+        <URL value="@../../../css/MainView.css" />
     </stylesheets>
 </VBox>

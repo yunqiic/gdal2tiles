@@ -5,14 +5,14 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox alignment="TOP_CENTER" prefHeight="400.0" prefWidth="600.0" stylesheets="@../css/MainView.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.AdvanceSettingViewController">
+<VBox alignment="TOP_CENTER" prefHeight="400.0" prefWidth="600.0" stylesheets="@../../../css/MainView.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.AdvanceSettingViewController">
     <children>
         <Label text="高级设置" textAlignment="CENTER">
             <font>
                 <Font size="26.0" />
             </font>
         </Label>
-        <VBox styleClass="advancePadding" stylesheets="@../css/MainView.css">
+        <VBox styleClass="advancePadding" stylesheets="@../../../css/MainView.css">
             <children>
                 <Label text="瓦片格式：" underline="true" />
                 <ComboBox prefHeight="23.0" prefWidth="555.0" />
@@ -21,13 +21,13 @@
                 <Insets />
             </opaqueInsets>
         </VBox>
-        <HBox styleClass="advancePadding" stylesheets="@../css/MainView.css">
+        <HBox styleClass="advancePadding" stylesheets="@../../../css/MainView.css">
             <children>
                 <Label text="透明度：" underline="true" />
                 <Spinner />
             </children>
         </HBox>
-        <VBox styleClass="advancePadding" stylesheets="@../css/MainView.css">
+        <VBox styleClass="advancePadding" stylesheets="@../../../css/MainView.css">
             <children>
                 <Label text="重采样：" underline="true" />
                 <ComboBox prefHeight="23.0" prefWidth="555.0" />
@@ -36,7 +36,7 @@
                 <Insets />
             </opaqueInsets>
         </VBox>
-        <VBox styleClass="advancePadding" stylesheets="@../css/MainView.css">
+        <VBox styleClass="advancePadding" stylesheets="@../../../css/MainView.css">
             <children>
                 <Label text="切片重采样：" underline="true" />
                 <ComboBox prefHeight="23.0" prefWidth="555.0" />
@@ -45,7 +45,7 @@
                 <Insets />
             </opaqueInsets>
         </VBox>
-      <VBox styleClass="advancePadding" stylesheets="@../css/MainView.css">
+      <VBox styleClass="advancePadding" stylesheets="@../../../css/MainView.css">
          <children>
                 <Label text="透明度：" underline="true" />
             <RadioButton mnemonicParsing="false" selected="true" text="默认" />
