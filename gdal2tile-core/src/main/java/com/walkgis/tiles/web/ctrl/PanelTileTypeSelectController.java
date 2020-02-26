@@ -35,7 +35,6 @@ public class PanelTileTypeSelectController implements Initializable {
     private void showSelectDialog(MouseEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择数据");
-        Stage selectFile = new Stage();
         if ((MainApp.defaultDir == null || "".equals(MainApp.defaultDir)))
             MainApp.defaultDir = System.getProperty("user.home");
         fileChooser.setInitialDirectory(new File(MainApp.defaultDir));
@@ -45,7 +44,7 @@ public class PanelTileTypeSelectController implements Initializable {
                 new FileChooser.ExtensionFilter("GeoPDF", "*.pdf"),
                 new FileChooser.ExtensionFilter("GeoTIFF", "*.tif")
         );
-        File file = fileChooser.showOpenDialog(selectFile);
+        File file = fileChooser.showOpenDialog(MainApp.primaryStage);
         if (file != null) {
             Dataset dataset = gdal.Open(file.getAbsolutePath(), gdalconst.GA_ReadOnly);
             if (dataset == null) {

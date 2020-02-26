@@ -9,9 +9,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -20,14 +22,12 @@ public class MainViewController implements Initializable {
     private static final Logger logger = LoggerFactory.getLogger(MainViewController.class);
     @FXML
     private Button btnProve, btnNext;
-    @FXML
-    private VBox contentPane;
-
     private String currentView;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        currentView = nextView("panelTileTypeSelect");
+        currentView = "panelTileTypeSelect";
+//        currentView = nextView("panelFileList");
         this.btnNext.setOnMouseClicked(this::btnNextClick);
         this.btnProve.setOnMouseClicked(this::btnProveClick);
     }
@@ -88,8 +88,8 @@ public class MainViewController implements Initializable {
         FXMLLoader loader = new FXMLLoader(MainApp.class.getResource(fxmlName + ".fxml"));
         try {
             Parent parent = loader.load();
-            contentPane.getChildren().clear();
-            contentPane.getChildren().add(parent);
+            BorderPane borderPane = (BorderPane) MainApp.scene.getRoot();
+            borderPane.setCenter(parent);
             return parent.getId();
         } catch (IOException e) {
             e.printStackTrace();

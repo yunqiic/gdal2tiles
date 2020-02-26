@@ -1,87 +1,109 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
 
-<GridPane fx:id="panelTileTypeSelect" alignment="CENTER" blendMode="SRC_OVER" cache="false" hgap="20.0" vgap="20.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.ctrl.PanelTileTypeSelectController">
+<GridPane fx:id="panelTileTypeSelect" alignment="CENTER" blendMode="SRC_OVER"
+          cache="false" hgap="20.0" maxHeight="400.0" maxWidth="830.0" minHeight="400.0" minWidth="830.0"
+          prefHeight="400.0" prefWidth="830.0" vgap="20.0" xmlns="http://javafx.com/javafx/8.0.121"
+          xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.ctrl.PanelTileTypeSelectController">
     <children>
-        <AnchorPane fx:id="panelStandard" prefHeight="148.0" prefWidth="292.0" style="" GridPane.columnIndex="0" GridPane.rowIndex="0">
+        <AnchorPane fx:id="panelStandard" prefHeight="148.0" prefWidth="292.0" style="" GridPane.columnIndex="0"
+                    GridPane.rowIndex="0">
             <children>
-                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
+                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0"
+                           layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false"
+                           visible="true">
                     <image>
-                        <Image url="@../../../img/device.png" />
+                        <Image url="@../../../img/device.png"/>
                     </image>
                 </ImageView>
                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0" prefHeight="118.0" prefWidth="200.0">
                     <children>
-                        <Label layoutY="35.0" styleClass="main-label-size" text="标准切片" textAlignment="CENTER" underline="false" wrapText="false">
+                        <Label layoutY="35.0" styleClass="main-label-size" text="标准切片" textAlignment="CENTER"
+                               underline="false" wrapText="false">
                             <font>
-                                <Font size="18.0" />
+                                <Font size="18.0"/>
                             </font>
                         </Label>
-                        <Label layoutX="0.0" layoutY="77.0" prefHeight="41.0" text="球面墨卡托投影，用于GIS和移动应用" wrapText="true" />
+                        <Label layoutX="0.0" layoutY="77.0" prefHeight="41.0" text="球面墨卡托投影，用于GIS和移动应用"
+                               wrapText="true"/>
                     </children>
                 </AnchorPane>
             </children>
         </AnchorPane>
-        <AnchorPane fx:id="panelGoogle" prefHeight="148.0" prefWidth="292.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+        <AnchorPane fx:id="panelGoogle" prefHeight="148.0" prefWidth="292.0" GridPane.columnIndex="0"
+                    GridPane.rowIndex="1">
             <children>
-                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
+                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0"
+                           layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false"
+                           visible="true">
                     <image>
-                        <Image url="@../../../img/google.png" />
+                        <Image url="@../../../img/google.png"/>
                     </image>
                 </ImageView>
                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0" prefHeight="118.0" prefWidth="200.0">
                     <children>
-                        <Label layoutY="35.0" styleClass="main-label-color" text="谷歌地球" wrapText="true" />
-                        <Label layoutX="0.0" layoutY="77.0" prefHeight="41.0" text="KML格式得数据" />
+                        <Label layoutY="35.0" styleClass="main-label-color" text="谷歌地球" wrapText="true"/>
+                        <Label layoutX="0.0" layoutY="77.0" prefHeight="41.0" text="KML格式得数据"/>
                     </children>
                 </AnchorPane>
             </children>
         </AnchorPane>
-        <AnchorPane fx:id="panelAdvance" prefHeight="148.0" prefWidth="292.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+        <AnchorPane fx:id="panelAdvance" prefHeight="148.0" prefWidth="292.0" GridPane.columnIndex="1"
+                    GridPane.rowIndex="0">
             <children>
-                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
+                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0"
+                           layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false"
+                           visible="true">
                     <image>
-                        <Image url="@../../../img/grid.png" />
+                        <Image url="@../../../img/grid.png"/>
                     </image>
                 </ImageView>
                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0" prefHeight="118.0" prefWidth="200.0">
                     <children>
-                        <Label layoutY="35.0" styleClass="main-label-color" text="高级切片" />
-                        <Label layoutX="0.0" layoutY="87.0" prefHeight="31.0" prefWidth="200.0" text="自定义坐标系。WGS84、百度、S-JTSK/Krovak等" wrapText="true" />
+                        <Label layoutY="35.0" styleClass="main-label-color" text="高级切片"/>
+                        <Label layoutX="0.0" layoutY="87.0" prefHeight="31.0" prefWidth="200.0"
+                               text="自定义坐标系。WGS84、百度、S-JTSK/Krovak等" wrapText="true"/>
                     </children>
                 </AnchorPane>
             </children>
         </AnchorPane>
-        <AnchorPane fx:id="panelRaster" prefHeight="148.0" prefWidth="292.0" style="" GridPane.columnIndex="1" GridPane.rowIndex="1">
+        <AnchorPane fx:id="panelRaster" prefHeight="148.0" prefWidth="292.0" style="" GridPane.columnIndex="1"
+                    GridPane.rowIndex="1">
             <children>
-                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0" layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false" visible="true">
+                <ImageView cache="false" fitHeight="58.0" fitWidth="86.0" focusTraversable="true" layoutX="0.0"
+                           layoutY="54.0" pickOnBounds="true" preserveRatio="false" rotate="0.0" smooth="false"
+                           visible="true">
                     <image>
-                        <Image url="@../../../img/raster.png" />
+                        <Image url="@../../../img/raster.png"/>
                     </image>
                 </ImageView>
                 <AnchorPane id="AnchorPane" layoutX="86.0" layoutY="0.0" prefHeight="118.0" prefWidth="200.0">
                     <children>
-                        <Label layoutY="35.0" styleClass="main-label-color" text="栅格切片" />
-                        <Label layoutX="0.0" layoutY="77.0" prefHeight="41.0" text="没有地理参考的图片" />
+                        <Label layoutY="35.0" styleClass="main-label-color" text="栅格切片"/>
+                        <Label layoutX="0.0" layoutY="77.0" prefHeight="41.0" text="没有地理参考的图片"/>
                     </children>
                 </AnchorPane>
             </children>
         </AnchorPane>
     </children>
     <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" />
-        <ColumnConstraints hgrow="SOMETIMES"  />
+        <ColumnConstraints hgrow="SOMETIMES"/>
+        <ColumnConstraints hgrow="SOMETIMES"/>
     </columnConstraints>
     <rowConstraints>
-        <RowConstraints vgrow="SOMETIMES" />
-        <RowConstraints vgrow="SOMETIMES" />
+        <RowConstraints vgrow="SOMETIMES"/>
+        <RowConstraints vgrow="SOMETIMES"/>
     </rowConstraints>
-   <padding>
-      <Insets bottom="50.0" left="80.0" right="80.0" top="50.0" />
-   </padding>
+    <padding>
+        <Insets bottom="50.0" left="80.0" right="80.0" top="50.0"/>
+    </padding>
 </GridPane>

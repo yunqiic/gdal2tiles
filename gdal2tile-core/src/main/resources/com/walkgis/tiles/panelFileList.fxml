@@ -1,40 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.walkgis.tiles.web.ctrl.PanelFileListController"
-            prefHeight="400.0" prefWidth="600.0" fx:id="panelFileList"
-            styleClass="page-panel"
-            visible="true">
+<AnchorPane fx:id="panelFileList" maxHeight="400.0" maxWidth="830.0" minHeight="400.0" minWidth="830.0"
+            prefHeight="400.0" prefWidth="830.0" xmlns="http://javafx.com/javafx/8.0.121"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.walkgis.tiles.web.ctrl.PanelFileListController">
     <children>
-        <ListView fx:id="listViewFiles" layoutX="35.0" layoutY="78.0" prefHeight="377.0"
-                  prefWidth="570.0" style="-fx-border-color: #ecf0f1;"/>
-        <Label layoutX="617.0" layoutY="37.0" prefHeight="35.0" prefWidth="272.0"
-               styleClass="main-label-info" text="坐标系统"/>
-        <Label fx:id="projection" layoutX="617.0" layoutY="72.0" prefHeight="31.0" prefWidth="272.0"
-               text="EPSG:4326" wrapText="true"/>
-        <Button fx:id="btnChangeRSR" layoutX="652.0" layoutY="103.0" mnemonicParsing="false"
-                prefHeight="31.0" prefWidth="141.0" text="改变"/>
-        <Label layoutX="617.0" layoutY="136.0" prefHeight="35.0" prefWidth="278.0"
-               styleClass="main-label-info" text="坐标范围"/>
-        <Label fx:id="transform" layoutX="617.0" layoutY="170.0" prefHeight="44.0" prefWidth="272.0"
+        <ListView fx:id="listViewFiles" layoutX="26.0" layoutY="45.0" prefHeight="306.0" prefWidth="502.0"
+                  style="-fx-border-color: #ecf0f1;"/>
+        <Label layoutX="540.0" layoutY="12.0" prefHeight="35.0" prefWidth="272.0" styleClass="main-label-info"
+               text="坐标系统"/>
+        <Label fx:id="projection" layoutX="540.0" layoutY="47.0" prefHeight="31.0" prefWidth="272.0" text="EPSG:4326"
+               wrapText="true"/>
+        <Button fx:id="btnChangeRSR" layoutX="575.0" layoutY="78.0" mnemonicParsing="false" prefHeight="31.0"
+                prefWidth="141.0" text="改变"/>
+        <Label layoutX="540.0" layoutY="111.0" prefHeight="35.0" prefWidth="278.0" styleClass="main-label-info"
+               text="坐标范围"/>
+        <Label fx:id="transform" layoutX="540.0" layoutY="145.0" prefHeight="44.0" prefWidth="272.0"
                text="102.232323   0.000483    0&#10;24.2323232   0   -0.000483"/>
-        <Button fx:id="btnChangeExtent" layoutX="653.0" layoutY="214.0" mnemonicParsing="false"
-                prefHeight="31.0" prefWidth="141.0" text="改变"/>
-        <Button fx:id="btnOpenFile" layoutX="35.0" layoutY="465.0" mnemonicParsing="false"
-                prefHeight="33.0" prefWidth="108.0" text="打开文件"/>
-        <Button fx:id="btnRemove" layoutX="175.0" layoutY="465.0" mnemonicParsing="false"
-                prefHeight="34.0" prefWidth="72.0" text="删除"/>
-        <Button fx:id="btnReview" layoutX="533.0" layoutY="461.0" mnemonicParsing="false"
-                prefHeight="41.0" prefWidth="72.0" text="查看"/>
-        <Label layoutX="35.0" layoutY="45.0" prefHeight="35.0" prefWidth="570.0"
-               style="-fx-background-color: #3498db; -fx-alignment: center;"
-               styleClass="main-label-info" text="文件名称" textAlignment="CENTER"/>
+        <Button fx:id="btnChangeExtent" layoutX="576.0" layoutY="189.0" mnemonicParsing="false" prefHeight="31.0"
+                prefWidth="141.0" text="改变"/>
+        <Button fx:id="btnOpenFile" layoutX="26.0" layoutY="354.0" mnemonicParsing="false" prefHeight="33.0"
+                prefWidth="108.0" text="打开文件"/>
+        <Button fx:id="btnRemove" layoutX="166.0" layoutY="354.0" mnemonicParsing="false" prefHeight="34.0"
+                prefWidth="72.0" text="删除"/>
+        <Button fx:id="btnReview" layoutX="524.0" layoutY="354.0" mnemonicParsing="false" prefHeight="34.0"
+                prefWidth="72.0" text="查看"/>
+        <Label layoutX="26.0" layoutY="12.0" prefHeight="35.0" prefWidth="502.0"
+               style="-fx-background-color: #3498db; -fx-alignment: center;" styleClass="main-label-info" text="文件名称"
+               textAlignment="CENTER"/>
     </children>
 </AnchorPane>

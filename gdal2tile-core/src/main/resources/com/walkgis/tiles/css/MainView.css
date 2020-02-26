@@ -75,3 +75,7 @@
 .advancePadding{
     -fx-padding: 5 0 5 20;
 }
+
+.navicator{
+    -fx-background-color: #bdc3c7;
+}

@@ -8,6 +8,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -21,7 +22,9 @@ public class MainApp extends Application {
     @Override
     public void start(Stage _primaryStage) throws Exception {
         primaryStage = _primaryStage;
-        scene = new Scene(loadFXML("mainview"));
+        BorderPane borderPane = (BorderPane) loadFXML("mainview");
+        borderPane.setCenter(loadFXML("panelTileTypeSelect"));
+        scene = new Scene(borderPane);
         scene.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();

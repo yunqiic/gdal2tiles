@@ -20,6 +20,6 @@ public class PanelProgressController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        probressBar.progressProperty().bind(progressModel.valueProperty());
+//        probressBar.progressProperty().bind(progressModel.valueProperty());
     }
 }
