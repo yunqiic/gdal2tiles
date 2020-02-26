@@ -11,16 +11,24 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Properties;
 
 public class MainApp extends Application {
-    private static Scene scene;
+    public static Scene scene;
+    public static Stage primaryStage;
+    public static String defaultDir;
 
     @Override
-    public void start(Stage stage) throws Exception {
-        scene = new Scene(loadFXML("MainView"));
+    public void start(Stage _primaryStage) throws Exception {
+        primaryStage = _primaryStage;
+        scene = new Scene(loadFXML("mainview"));
         scene.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
-        stage.setScene(scene);
-        stage.show();
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        Properties prop = new Properties();
+        prop.load(this.getClass().getResourceAsStream("/application.properties"));
+        defaultDir = prop.getProperty("defaultDir", "E:\\Data\\Raster");
     }
 
     public static void setRoot(String fxml) throws IOException {

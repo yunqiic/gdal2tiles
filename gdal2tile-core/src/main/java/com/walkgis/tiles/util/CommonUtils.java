@@ -1,5 +1,6 @@
 package com.walkgis.tiles.util;
 
+import com.walkgis.tiles.entity.ProgressModelProperty;
 import javafx.concurrent.Task;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
@@ -344,7 +345,7 @@ public class CommonUtils {
         return gdal2TilesTemp.generate_base_tiles(tile_details);
     }
 
-    public static void create_overview_tiles(TileJobInfo tileJobInfo, String outputFolder, OptionObj options, javafx.scene.control.ProgressBar progressBar) {
+    public static void create_overview_tiles(TileJobInfo tileJobInfo, String outputFolder, OptionObj options, ProgressModelProperty modelProperty) {
         Driver mem_driver = gdal.GetDriverByName("MEM");
         String tile_driver = tileJobInfo.tileDriver;
         Driver out_driver = gdal.GetDriverByName(tile_driver);
@@ -361,7 +362,7 @@ public class CommonUtils {
 
         if (tcount == 0) return;
 
-        ProgressBar progress_bar = new ProgressBar(tcount, progressBar);
+        ProgressBar progress_bar = new ProgressBar(tcount, modelProperty);
         progress_bar.updateTop("Generating Overview Tiles:");
         progress_bar.start();
 

@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox alignment="TOP_CENTER" prefHeight="400.0" prefWidth="600.0" stylesheets="@../../../css/MainView.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.AdvanceSettingViewController">
+<VBox alignment="TOP_CENTER" prefHeight="400.0" prefWidth="600.0" stylesheets="@../../../css/MainView.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.sub.AdvanceSettingViewController">
     <children>
         <Label text="高级设置" textAlignment="CENTER">
             <font>

@@ -1,5 +1,6 @@
 package com.walkgis.tiles.util;
 
+import com.walkgis.tiles.entity.ProgressModelProperty;
 import javafx.application.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,18 +12,18 @@ public class ProgressBar {
     private int total_items;
     private int nb_items_done;
     private int current_progress;
-    private javafx.scene.control.ProgressBar progressBar;
+    private ProgressModelProperty modelProperty;
 
-    public ProgressBar(int total_items, javafx.scene.control.ProgressBar progressBar) {
+    public ProgressBar(int total_items, ProgressModelProperty modelProperty) {
         this.total_items = total_items;
         this.nb_items_done = 0;
         this.current_progress = 0;
         this.STEMP = 2.5;
-        this.progressBar = progressBar;
+        this.modelProperty = modelProperty;
     }
 
     public void start() {
-        Platform.runLater(() -> progressBar.setProgress(0));
+        Platform.runLater(() -> modelProperty.setValue(0));
         logger.debug("0");
     }
 
@@ -35,7 +36,7 @@ public class ProgressBar {
                 if (this.current_progress + this.STEMP <= progress) {
                     this.current_progress += this.STEMP;
                     if (this.current_progress % 10 == 0) {
-                        Platform.runLater(() -> progressBar.setProgress(this.current_progress));
+                        Platform.runLater(() -> modelProperty.setValue(this.current_progress));
                         if (this.current_progress == 100) {
                             logger.debug("\n");
                         }

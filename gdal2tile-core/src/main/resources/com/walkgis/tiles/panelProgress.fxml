@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.walkgis.tiles.web.ctrl.PanelProgressController"
+      fx:id="panelProgress" styleClass="page-panel" alignment="CENTER" prefHeight="400.0" prefWidth="600.0">
+    <children>
+        <Label fx:id="lblProgressTop" text="Label"/>
+        <HBox alignment="CENTER">
+            <children>
+                <ProgressBar fx:id="probressBar" prefHeight="30.0" prefWidth="824.0"
+                             progress="0.0"/>
+                <Label fx:id="lblProgressRate" text="Label"/>
+            </children>
+        </HBox>
+        <Label fx:id="lblProgressBottom" text="Label"/>
+    </children>
+</VBox>
