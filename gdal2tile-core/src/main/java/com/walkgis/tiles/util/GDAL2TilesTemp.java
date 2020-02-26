@@ -73,13 +73,6 @@ public class GDAL2TilesTemp {
     private OptionObj options = null;
 
     public GDAL2TilesTemp(String input_file, String output_folder, OptionObj options) {
-        gdal.AllRegister();
-        ogr.RegisterAll();
-        // 为了支持中文路径，请添加下面这句代码
-        gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
-        // 为了使属性表字段支持中文，请添加下面这句
-        gdal.SetConfigOption("SHAPE_ENCODING", "");
-
         this.tmp_dir = System.getProperty("java.io.tmpdir");
         this.tmp_vrt_filename = new File(this.tmp_dir, UUID.randomUUID().toString() + ".vrt").getAbsolutePath();
         this.scaledquery = true;
