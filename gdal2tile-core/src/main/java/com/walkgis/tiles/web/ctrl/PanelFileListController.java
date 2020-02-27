@@ -1,23 +1,21 @@
 package com.walkgis.tiles.web.ctrl;
 
 import com.walkgis.tiles.MainApp;
-import com.walkgis.tiles.entity.FileItemList;
-import com.walkgis.tiles.web.MainViewController;
+import com.walkgis.tiles.entity.FileItem;
 import com.walkgis.tiles.web.sub.ReviewViewController;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
@@ -25,7 +23,6 @@ import org.gdal.gdalconst.gdalconst;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 public class PanelFileListController implements Initializable {
@@ -36,8 +33,7 @@ public class PanelFileListController implements Initializable {
     @FXML
     private Button btnChangeRSR, btnChangeExtent, btnOpenFile, btnReview, btnRemove;
 
-    public static FileItemList fileItemList;
-
+    public static ObservableList<FileItem> fileItems = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -47,14 +43,12 @@ public class PanelFileListController implements Initializable {
         this.btnChangeRSR.setOnMouseClicked(this::btnChangeRSRClick);
         this.btnChangeExtent.setOnMouseClicked(this::btnChangeExtentClick);
 
-        this.fileItemList = new FileItemList(new ArrayList<>());
-        this.listViewFiles.itemsProperty().bind(fileItemList);
-
+        this.listViewFiles.setItems(fileItems);
         this.listViewFiles.getSelectionModel().selectedItemProperty().addListener(this::noticeListItemChange);
 
-        if (this.fileItemList.size() > 0) {
-            this.projection.textProperty().bindBidirectional(this.fileItemList.get(0).projectionProperty());
-            this.transform.textProperty().bindBidirectional(this.fileItemList.get(0).transformProperty());
+        if (fileItems.size() > 0) {
+            this.projection.textProperty().bindBidirectional(fileItems.get(0).projectionProperty());
+            this.transform.textProperty().bindBidirectional(fileItems.get(0).transformProperty());
             this.projection.setText("");
             this.transform.setText("");
         }
@@ -64,14 +58,14 @@ public class PanelFileListController implements Initializable {
     private void btnReviewClick(MouseEvent event) {
         FXMLLoader loader = new FXMLLoader(MainApp.class.getResource("review.fxml"));
         try {
-            MainApp.primaryStage.setScene(new Scene(loader.load()));
-            MainApp.primaryStage.initModality(Modality.NONE);
-            MainApp.primaryStage.show();
-            ((ReviewViewController) loader.getController()).showReview((FileItemList.FileItem) this.listViewFiles.getSelectionModel().getSelectedItem());
+            Stage newStage = new Stage();
+            newStage.initModality(Modality.APPLICATION_MODAL);
+            newStage.setScene(new Scene(loader.load()));
+            newStage.show();
+            ((ReviewViewController) loader.getController()).showReview((FileItem) this.listViewFiles.getSelectionModel().getSelectedItem());
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     @FXML
@@ -101,16 +95,16 @@ public class PanelFileListController implements Initializable {
                 alert.showAndWait();
                 return;
             }
-            FileItemList.FileItem item = new FileItemList.FileItem(file, 0);
+            FileItem item = new FileItem(file, 0);
             item.setDataset(dataset);
-            fileItemList.add(item);
+            fileItems.add(item);
         }
     }
 
     @FXML
     private void btnRemoveClick(MouseEvent event) {
-        ObservableList<FileItemList.FileItem> fileItemObservableList = listViewFiles.getSelectionModel().getSelectedItems();
-        fileItemList.remove(fileItemObservableList.get(0));
+        ObservableList<FileItem> fileItemObservableList = listViewFiles.getSelectionModel().getSelectedItems();
+        fileItems.remove(fileItemObservableList.get(0));
     }
 
     @FXML
@@ -133,7 +127,7 @@ public class PanelFileListController implements Initializable {
     @FXML
     private void noticeListItemChange(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
         if (newValue == null) return;
-        FileItemList.FileItem fileItem = (FileItemList.FileItem) newValue;
+        FileItem fileItem = (FileItem) newValue;
         if (fileItem.getFile().exists() && fileItem.getDataset() != null) {
             this.projection.setText(fileItem.getProjection());
             this.transform.setText(fileItem.getTransform());

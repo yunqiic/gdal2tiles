@@ -1,7 +1,10 @@
 package com.walkgis.tiles.web.ctrl;
 
 import com.walkgis.tiles.MainApp;
-import com.walkgis.tiles.entity.FileItemList;
+import com.walkgis.tiles.entity.FileItem;
+import com.walkgis.tiles.web.MainViewController;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
@@ -9,10 +12,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -56,11 +59,12 @@ public class PanelTileTypeSelectController implements Initializable {
                 alert.showAndWait();
                 return;
             }
-            FileItemList.FileItem item = new FileItemList.FileItem(file, 0);
+            FileItem item = new FileItem(file, 0);
             item.setDataset(dataset);
-            PanelFileListController.fileItemList.add(item);
 
-//            mainViewController.nextView("panelFileList", "panelFileList");
+            PanelFileListController.fileItems.add(item);
+
+           MainViewController.nextView("panelFileList");
         }
     }
 }

@@ -15,6 +15,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -25,6 +26,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class CommonUtils {
@@ -71,16 +76,16 @@ public class CommonUtils {
      */
     public static String setup_input_srs(Dataset input_dataset, OptionObj options, SpatialReference input_srs) {
         String input_srs_wkt = "";
-        if (!(options.s_srs==null||"".equals(options.s_srs))) {
+        if (!(options.s_srs == null || "".equals(options.s_srs))) {
 //            input_srs = new SpatialReference();
             input_srs.SetFromUserInput(options.s_srs);
             input_srs_wkt = input_srs.ExportToWkt();
         } else {
             input_srs_wkt = input_dataset.GetProjection();
 
-            if (!(input_srs_wkt==null||"".equals(input_srs_wkt)) && input_dataset.GetGCPCount() != 0)
+            if (!(input_srs_wkt == null || "".equals(input_srs_wkt)) && input_dataset.GetGCPCount() != 0)
                 input_srs_wkt = input_dataset.GetGCPProjection();
-            if (!(input_srs_wkt==null||"".equals(input_srs_wkt))) {
+            if (!(input_srs_wkt == null || "".equals(input_srs_wkt))) {
 //                input_srs = new SpatialReference();
                 input_srs.SetFromUserInput(input_srs_wkt);
             }
@@ -337,15 +342,13 @@ public class CommonUtils {
 
     }
 
-    public static TileJobInfo worker_tile_details(String input_file, String output_folder, OptionObj options, List<TileDetail> tile_details) throws Exception {
-        GDAL2TilesTemp gdal2TilesTemp = new GDAL2TilesTemp(input_file, output_folder, options);
-        gdal2TilesTemp.open_input();
+    public static TileJobInfo worker_tile_details(GDAL2Tiles gdal2TilesTemp, List<TileDetail> tile_details) throws Exception {
         gdal2TilesTemp.generate_metadata();
 
         return gdal2TilesTemp.generate_base_tiles(tile_details);
     }
 
-    public static void create_overview_tiles(TileJobInfo tileJobInfo, String outputFolder, OptionObj options, ProgressModelProperty modelProperty) {
+    public static void create_overview_tiles(GDAL2Tiles gdal2TilesTemp, TileJobInfo tileJobInfo, String outputFolder, RunTask runTask) {
         Driver mem_driver = gdal.GetDriverByName("MEM");
         String tile_driver = tileJobInfo.tileDriver;
         Driver out_driver = gdal.GetDriverByName(tile_driver);
@@ -362,9 +365,9 @@ public class CommonUtils {
 
         if (tcount == 0) return;
 
-        ProgressBar progress_bar = new ProgressBar(tcount, modelProperty);
-        progress_bar.updateTop("Generating Overview Tiles:");
-        progress_bar.start();
+        runTask.reset(tcount);
+
+        //("Generating Overview Tiles:");
 
         for (int tz = tileJobInfo.tmaxz - 1; tz > tileJobInfo.tminz - 1; tz--) {
             int[] tminxytmaxxy = tileJobInfo.tminmax.get(tz);
@@ -375,12 +378,13 @@ public class CommonUtils {
 
                     logger.debug(tilefilename);
 
-                    progress_bar.log_progress();
+                    runTask.updateValue(0);
+
                     if (new File(tilefilename).exists()) {
                         continue;
                     }
 
-                    new File(tilefilename).mkdirs();
+                    new File(tilefilename).getParentFile().mkdirs();
 
                     Dataset dsquery = mem_driver.Create("", 2 * tileJobInfo.tileSize, 2 * tileJobInfo.tileSize, tilebands);
                     Dataset dstile = mem_driver.Create("", tileJobInfo.tileSize, tileJobInfo.tileSize, tilebands);
@@ -427,16 +431,17 @@ public class CommonUtils {
                     }
 
                     if (children.size() > 0) {
+                        OptionObj options = gdal2TilesTemp.getOptions();
                         scale_query_to_tile(dsquery, dstile, options, tilefilename);
 
-                        if (!options.resampling.equalsIgnoreCase("antialias"))
+                        if (!gdal2TilesTemp.getOptions().resampling.equalsIgnoreCase("antialias"))
                             out_driver.CreateCopy(tilefilename, dstile, 0);
 
                         if (tileJobInfo.kml)
                             generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), options, children);
                     }
 
-                    progress_bar.log_progress();
+                    runTask.updateValue(0);
                 }
             }
         }
@@ -481,8 +486,7 @@ public class CommonUtils {
 
 
         String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
-        new File(tilefilename).mkdirs();
-//        FileUtil.createMissingParentDirectories(new File(tilefilename));
+        new File(tilefilename).getParentFile().mkdirs();
 
         Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
 
@@ -571,6 +575,62 @@ public class CommonUtils {
             int res = gdal.ReprojectImage(dsquery, dstile, null, null, gdal_resampling);
             if (res != 0)
                 logger.error("ReprojectImage() failed on %s, error %f", tilefilename, res);
+        }
+    }
+
+    public static void single_threaded_tiling(GDAL2Tiles gdal2TilesTemp, RunTask runTask) throws Exception {
+        List<TileDetail> tile_details = new ArrayList<>();
+        TileJobInfo conf = CommonUtils.worker_tile_details(gdal2TilesTemp, tile_details);
+
+        logger.debug("Tiles details calc complete.");
+        runTask.reset(tile_details.size());
+
+        for (TileDetail tileDetail : tile_details) {
+            CommonUtils.create_base_tile(conf, tileDetail);
+            runTask.updateValue(0);
+        }
+
+        CommonUtils.cachedDs = null;
+
+        CommonUtils.create_overview_tiles(gdal2TilesTemp, conf, gdal2TilesTemp.getOutput_folder(), runTask);
+    }
+
+    public static void multi_threaded_tiling(GDAL2Tiles gdal2TilesTemp, RunTask runTask) {
+        int nb_processes = gdal2TilesTemp.getOptions().nb_processes == null ? 1 : gdal2TilesTemp.getOptions().nb_processes;
+        gdal.SetConfigOption("GDAL_CACHEMAX", String.valueOf(gdal.GetCacheMax() / nb_processes));
+
+        ExecutorService service = Executors.newFixedThreadPool(nb_processes, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+
+        List<TileDetail> tile_details = new ArrayList<>();
+
+        try {
+            TileJobInfo conf = CommonUtils.worker_tile_details(gdal2TilesTemp, tile_details);
+
+            runTask.reset(tile_details.size());
+
+            for (int i = 0; i < tile_details.size(); i++) {
+                service.execute(new CommonUtils.BaseTileTask(conf, tile_details.get(i)));
+                runTask.updateValue(0);
+            }
+
+            service.shutdown();
+            try {
+                service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                CommonUtils.create_overview_tiles(gdal2TilesTemp, conf, gdal2TilesTemp.getOutput_folder(), runTask);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

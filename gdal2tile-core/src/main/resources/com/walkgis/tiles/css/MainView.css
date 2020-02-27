@@ -56,26 +56,29 @@
 
 
 #panelOutputMBTiles, #panelOutputDir, #panelOutputGeopackage {
-    -fx-background-color: #bdc3c7;
-    -fx-cursor: hand;
+    -fx-background-color: #ecf0f1,
+    linear-gradient(to bottom, #ecf4fa 0%, #ced4d9 100%);
+    -fx-background-insets: 0, 0 0 1 0;
+    -fx-margin: 0 5 5 0;
 }
 
 #panelOutputMBTiles:hover, #panelOutputDir:hover, #panelOutputGeopackage:hover {
-    -fx-background-color: #ecf0f1;
+    -fx-background-color: #bdc3c7;
+    -fx-cursor: hand;
 }
 
 #containerOutputMBTiles, #containerOutputDir, #containerOutputGeopackage {
     -fx-background-color: #3498db;
 }
 
-#vbProgressContainer{
+#vbProgressContainer {
     -fx-background-color: #1abc9c;
 }
 
-.advancePadding{
+.advancePadding {
     -fx-padding: 5 0 5 20;
 }
 
-.navicator{
+.navicator {
     -fx-background-color: #bdc3c7;
 }

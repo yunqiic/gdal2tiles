@@ -3,11 +3,13 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane fx:id="root" prefHeight="278.0" prefWidth="518.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.walkgis.tiles.web.sub.ReviewViewController">
+<AnchorPane maxHeight="293.0" maxWidth="518.0" minHeight="293.0" minWidth="518.0" prefHeight="293.0"
+            prefWidth="518.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.walkgis.tiles.web.sub.ReviewViewController">
     <children>
-        <ImageView fx:id="imageView" fitHeight="293.0" fitWidth="518.0" layoutY="1.0" pickOnBounds="true"
-                   preserveRatio="true">
+        <ImageView fx:id="imageView" fitHeight="293.0" fitWidth="518.0" pickOnBounds="true" preserveRatio="true"
+                   AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                   AnchorPane.topAnchor="0.0">
             <image>
                 <Image url="@../../../img/bg.jpg"/>
             </image>
