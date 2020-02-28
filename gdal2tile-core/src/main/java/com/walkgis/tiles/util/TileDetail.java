@@ -30,7 +30,7 @@ public class TileDetail {
 	}
 
 	public String toString() {
-        return String.format("TileDetail %s\n%s\n%s\n", this.tx, this.ty, this.tz);
+        return String.format("当前进行 %s-%s-%s 切片", this.tx, this.ty, this.tz);
     }
 
 }

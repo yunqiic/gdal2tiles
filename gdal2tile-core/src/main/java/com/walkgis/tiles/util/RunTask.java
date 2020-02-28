@@ -1,5 +1,8 @@
 package com.walkgis.tiles.util;
 
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +11,7 @@ public class RunTask extends Task<Integer> {
     private Logger logger = LoggerFactory.getLogger(RunTask.class);
     private GDAL2Tiles gdal2TilesTemp;
     private RunTask runTask;
-
+    private SimpleStringProperty rateProperty = new SimpleStringProperty();
 
     public RunTask(GDAL2Tiles gdal2TilesTemp) {
         this.gdal2TilesTemp = gdal2TilesTemp;
@@ -16,13 +19,24 @@ public class RunTask extends Task<Integer> {
     }
 
     @Override
-    protected void updateValue(Integer integer) {
-        super.updateValue(integer);
+    protected void updateMessage(String message) {
+        super.updateMessage(message);
     }
 
     @Override
-    protected void updateMessage(String message) {
-        super.updateMessage(message);
+    protected void updateTitle(String title) {
+        super.updateTitle(title);
+    }
+
+    @Override
+    protected void updateProgress(double workDone, double totalWork) {
+        super.updateProgress(workDone, totalWork);
+        if (!Platform.isFxApplicationThread())
+            Platform.runLater(() -> rateProperty.setValue((int) ((workDone / totalWork) * 100) + "%"));
+    }
+
+    public final ReadOnlyStringProperty rateProperty() {
+        return this.rateProperty;
     }
 
     @Override
@@ -37,9 +51,5 @@ public class RunTask extends Task<Integer> {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public void reset(int size) {
-
     }
 }

@@ -2,8 +2,6 @@ package com.walkgis.tiles.web.ctrl;
 
 import com.walkgis.tiles.util.GDAL2Tiles;
 import com.walkgis.tiles.util.RunTask;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -40,34 +38,34 @@ public class PanelProgressController implements Initializable {
 
     public void init(GDAL2Tiles gdal2TilesTemp) {
         RunTask task = new RunTask(gdal2TilesTemp);
-        task.valueProperty().addListener((observableValue, oldValue, newValue) -> {
-            nb_items_done += 1;
-            double progress = (double) nb_items_done / total_items * 100.0;
-            if (progress >= (current_progress + STEMP)) {
-                boolean done = false;
-                while (!done) {
-                    if (current_progress + STEMP <= progress) {
-                        current_progress += STEMP;
-                        if (current_progress % 10 == 0) {
+        probressBar.progressProperty().bind(task.progressProperty());
+        lblProgressBottom.textProperty().bind(task.messageProperty());
+        lblProgressTop.textProperty().bind(task.titleProperty());
+        lblProgressRate.textProperty().bind(task.rateProperty());
 
-                            probressBar.setProgress(current_progress);
-
-                            if (this.current_progress == 100) {
-                                logger.debug("\n");
-                            }
-                        } else {
-                            logger.debug(".");
-                        }
-                    } else done = true;
-                }
-            }
-        });
-        task.messageProperty().addListener((observableValue, oldValue, newValue) -> {
-            lblProgressTop.setText(newValue);
-        });
-        task.progressProperty().addListener((observableValue, oldValue, newValue) -> {
-            logger.info(newValue.toString());
-        });
+//        task.workDoneProperty().addListener(((observableValue, oldValue, newValue) -> {
+//            nb_items_done += 1;
+//            double progress = (double) nb_items_done / total_items * 100.0;
+//            if (progress >= (current_progress + STEMP)) {
+//                boolean done = false;
+//                while (!done) {
+//                    if (current_progress + STEMP <= progress) {
+//                        current_progress += STEMP;
+//                        if (current_progress % 10 == 0) {
+//
+//                            probressBar.setProgress(current_progress);
+//                            lblProgressRate.setText(current_progress + "%");
+//
+//                            if (this.current_progress == 100) {
+//                                logger.debug("\n");
+//                            }
+//                        } else {
+//                            logger.debug(".");
+//                        }
+//                    } else done = true;
+//                }
+//            }
+//        }));
         new Thread(task).start();
     }
 }

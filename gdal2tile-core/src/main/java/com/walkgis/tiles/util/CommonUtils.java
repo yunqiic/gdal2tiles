@@ -1,7 +1,5 @@
 package com.walkgis.tiles.util;
 
-import com.walkgis.tiles.entity.ProgressModelProperty;
-import javafx.concurrent.Task;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
@@ -26,10 +24,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class CommonUtils {
@@ -365,11 +360,12 @@ public class CommonUtils {
 
         if (tcount == 0) return;
 
-        runTask.reset(tcount);
+        runTask.updateTitle("Generating Overview Tiles");
+        runTask.updateProgress(0, tcount);
 
-        //("Generating Overview Tiles:");
-
+        long flag = 0;
         for (int tz = tileJobInfo.tmaxz - 1; tz > tileJobInfo.tminz - 1; tz--) {
+            runTask.updateMessage("正在生成第" + tz + "级切片");
             int[] tminxytmaxxy = tileJobInfo.tminmax.get(tz);
             for (int ty = tminxytmaxxy[3]; ty > tminxytmaxxy[1] - 1; ty--) {
                 for (int tx = tminxytmaxxy[0]; tx < tminxytmaxxy[2] + 1; tx++) {
@@ -378,9 +374,8 @@ public class CommonUtils {
 
                     logger.debug(tilefilename);
 
-                    runTask.updateValue(0);
-
                     if (new File(tilefilename).exists()) {
+                        runTask.updateProgress(flag + 1, tcount);
                         continue;
                     }
 
@@ -441,13 +436,17 @@ public class CommonUtils {
                             generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), options, children);
                     }
 
-                    runTask.updateValue(0);
+                    runTask.updateProgress(flag + 1, tcount);
+                    flag++;
                 }
             }
         }
+
+        runTask.updateTitle("完成");
+        runTask.updateMessage("");
     }
 
-    public static void create_base_tile(TileJobInfo tileJobInfo, TileDetail tileDetail) {
+    public synchronized static void create_base_tile(TileJobInfo tileJobInfo, TileDetail tileDetail) {
         int dataBandsCount = tileJobInfo.nbDataBands;
         String output = tileJobInfo.outputFilePath;
         String tileext = tileJobInfo.tileExtension;
@@ -580,14 +579,17 @@ public class CommonUtils {
 
     public static void single_threaded_tiling(GDAL2Tiles gdal2TilesTemp, RunTask runTask) throws Exception {
         List<TileDetail> tile_details = new ArrayList<>();
+        runTask.updateTitle("初始化切片信息");
         TileJobInfo conf = CommonUtils.worker_tile_details(gdal2TilesTemp, tile_details);
-
-        logger.debug("Tiles details calc complete.");
-        runTask.reset(tile_details.size());
-
+        //初始化
+        runTask.updateTitle("生成基础切片");
+        runTask.updateProgress(tile_details.size(), 0);
+        int flag = 0;
         for (TileDetail tileDetail : tile_details) {
             CommonUtils.create_base_tile(conf, tileDetail);
-            runTask.updateValue(0);
+            runTask.updateProgress(flag + 1, tile_details.size());
+            runTask.updateMessage(tileDetail.toString());
+            flag++;
         }
 
         CommonUtils.cachedDs = null;
@@ -605,26 +607,31 @@ public class CommonUtils {
             return t;
         });
 
+        // 1.定义CompletionService
+        CompletionService<Integer> completionService = new ExecutorCompletionService<>(service);
+
         List<TileDetail> tile_details = new ArrayList<>();
-
         try {
+            runTask.updateTitle("初始化切片信息");
             TileJobInfo conf = CommonUtils.worker_tile_details(gdal2TilesTemp, tile_details);
+            runTask.updateProgress(0, tile_details.size());
 
-            runTask.reset(tile_details.size());
-
+            runTask.updateTitle("生成基础切片");
             for (int i = 0; i < tile_details.size(); i++) {
-                service.execute(new CommonUtils.BaseTileTask(conf, tile_details.get(i)));
-                runTask.updateValue(0);
+                completionService.submit(new CommonUtils.BaseTileTask(i, conf, tile_details.get(i)));
             }
 
-            service.shutdown();
-            try {
-                service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                CommonUtils.create_overview_tiles(gdal2TilesTemp, conf, gdal2TilesTemp.getOutput_folder(), runTask);
+            int flag = 0;
+            for (int i = 0; i < tile_details.size(); i++) {
+                //那个执行完了，就用那个
+                Integer result = completionService.take().get();
+                logger.info("已经完成：" + result);
+                runTask.updateProgress(flag++, tile_details.size());
             }
+
+            CommonUtils.create_overview_tiles(gdal2TilesTemp, conf, gdal2TilesTemp.getOutput_folder(), runTask);
+            //结束线程
+            service.shutdown();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -641,20 +648,21 @@ public class CommonUtils {
         return new double[]{x, y};
     }
 
-    public static class BaseTileTask extends Task<Void> {
+    public static class BaseTileTask implements Callable<Integer> {
         private TileDetail tileDetail;
         private TileJobInfo tileJobInfo;
+        private Integer index;
 
-        public BaseTileTask(TileJobInfo tileJobInfo, TileDetail tileDetail) {
+        public BaseTileTask(Integer index, TileJobInfo tileJobInfo, TileDetail tileDetail) {
+            this.index = index;
             this.tileJobInfo = tileJobInfo;
             this.tileDetail = tileDetail;
         }
 
         @Override
-        public Void call() throws Exception {
-            this.updateMessage("");
+        public Integer call() throws Exception {
             create_base_tile(tileJobInfo, tileDetail);
-            return null;
+            return index;
         }
     }
 }

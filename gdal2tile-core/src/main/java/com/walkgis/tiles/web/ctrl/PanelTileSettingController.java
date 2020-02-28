@@ -62,7 +62,7 @@ public class PanelTileSettingController implements Initializable {
     public void init(File inputFile) {
         gdal2TilesTemp = new GDAL2Tiles();
         gdal2TilesTemp.setInput_file(inputFile.getAbsolutePath());
-        optionObj.nb_processes = 1;
+        optionObj.nb_processes = 3;
         try {
             gdal2TilesTemp.setOptions(optionObj);
             gdal2TilesTemp.open_input();
