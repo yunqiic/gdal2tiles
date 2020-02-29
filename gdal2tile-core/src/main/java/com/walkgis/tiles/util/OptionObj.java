@@ -11,5 +11,5 @@ public class OptionObj {
     public String webviewer = "all";
     public boolean exclude_transparent = false;
     public String title = "";
-    public Integer nb_processes = 1;
+    public Integer nb_processes = 16;
 }

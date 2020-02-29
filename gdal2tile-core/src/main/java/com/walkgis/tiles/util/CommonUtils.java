@@ -30,7 +30,17 @@ import java.util.stream.Collectors;
 public class CommonUtils {
     private static final Logger logger = LoggerFactory.getLogger(CommonUtils.class);
 
-    public static Dataset cachedDs;
+    private static ThreadFactory namedThreadFactory = new ThreadFactory() {
+        private int i = 0;
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+            thread.setName("thread-" + i++);
+            return thread;
+        }
+    };
 
     /**
      * Extract the NODATA values from the dataset or use the passed arguments as override if any
@@ -129,8 +139,6 @@ public class CommonUtils {
         if (!from_srs.ExportToProj4().equalsIgnoreCase(to_srs.ExportToProj4()) ||
                 from_dataset.GetGCPCount() != 0) {
             to_dataset = gdal.AutoCreateWarpedVRT(from_dataset, from_srs.ExportToWkt(), to_srs.ExportToWkt());
-
-            to_dataset.GetDriver().CreateCopy("_tiles.vrt", to_dataset);
             return to_dataset;
         } else return from_dataset;
     }
@@ -370,6 +378,7 @@ public class CommonUtils {
             for (int ty = tminxytmaxxy[3]; ty > tminxytmaxxy[1] - 1; ty--) {
                 for (int tx = tminxytmaxxy[0]; tx < tminxytmaxxy[2] + 1; tx++) {
                     ti += 1;
+
                     String tilefilename = outputFolder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileJobInfo.tileExtension);
 
                     logger.debug(tilefilename);
@@ -446,7 +455,7 @@ public class CommonUtils {
         runTask.updateMessage("");
     }
 
-    public synchronized static void create_base_tile(TileJobInfo tileJobInfo, TileDetail tileDetail) {
+    public static void create_base_tile(TileJobInfo tileJobInfo, TileDetail tileDetail) {
         int dataBandsCount = tileJobInfo.nbDataBands;
         String output = tileJobInfo.outputFilePath;
         String tileext = tileJobInfo.tileExtension;
@@ -454,72 +463,61 @@ public class CommonUtils {
         OptionObj options = tileJobInfo.options;
 
         int tileBands = dataBandsCount + 1;
-        Dataset ds;
+        Dataset ds = gdal.Open(tileJobInfo.srcFile, gdalconst.GA_ReadOnly);
+        synchronized (ds) {
+            Driver mem_drv = gdal.GetDriverByName("MEM");
+            Driver out_drv = gdal.GetDriverByName(tileJobInfo.tileDriver);
+            Band alphaband = ds.GetRasterBand(1).GetMaskBand();
 
+            int tx = tileDetail.tx;
+            int ty = tileDetail.ty;
+            int tz = tileDetail.tz;
+            int rx = tileDetail.rx;
+            int ry = tileDetail.ry;
+            int rxsize = tileDetail.rxsize;
+            int rysize = tileDetail.rysize;
+            int wx = tileDetail.wx;
+            int wy = tileDetail.wy;
+            int wxsize = tileDetail.wxsize;
+            int wysize = tileDetail.wysize;
+            int querysize = tileDetail.querysize;
+            int dataType = 1;
 
-        if (cachedDs != null)
-            ds = cachedDs;
-        else {
-            ds = gdal.Open(tileJobInfo.srcFile, gdalconst.GA_ReadOnly);
-            cachedDs = ds;
-        }
+            String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
+            new File(tilefilename).getParentFile().mkdirs();
 
-        Driver mem_drv = gdal.GetDriverByName("MEM");
-        Driver out_drv = gdal.GetDriverByName(tileJobInfo.tileDriver);
-        Band alphaband = ds.GetRasterBand(1).GetMaskBand();
+            Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
 
+            byte[] data = new byte[1024 * 1024 * ds.GetRasterCount()];
+            byte[] alpha = new byte[1024 * 1024];
+            if (rxsize != 0 && rysize != 0 && wxsize != 0 && wysize != 0) {
+                ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, dataType, data, getBandList(ds.GetRasterCount()));
+                alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, dataType, alpha);
 
-        int tx = tileDetail.tx;
-        int ty = tileDetail.ty;
-        int tz = tileDetail.tz;
-        int rx = tileDetail.rx;
-        int ry = tileDetail.ry;
-        int rxsize = tileDetail.rxsize;
-        int rysize = tileDetail.rysize;
-        int wx = tileDetail.wx;
-        int wy = tileDetail.wy;
-        int wxsize = tileDetail.wxsize;
-        int wysize = tileDetail.wysize;
-        int querysize = tileDetail.querysize;
-        int dataType = 1;
+                logger.debug(String.format("rx,ry,rxsize,rysize,wxsize,wysize=%d,%d,%d,%d,%d,%d", rx, ry, rxsize, rysize, wxsize, wysize));
+            } else return;
 
+            if (tileSize == querysize) {
+                dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, data, getBandList(ds.getRasterCount()));
+                dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, alpha, new int[]{4});
+            } else {
+                Dataset dsquery = mem_drv.Create("", querysize, querysize, tileBands);
+                dsquery.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, data, getBandList(ds.getRasterCount()));
+                dsquery.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, alpha, new int[]{4});
 
-        String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
-        new File(tilefilename).getParentFile().mkdirs();
+                scale_query_to_tile(dsquery, dstile, options, tilefilename);
 
-        Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
+                dsquery.delete();
+            }
+            //antialias
+            if (!options.resampling.equalsIgnoreCase("antialias"))
+                out_drv.CreateCopy(tilefilename, dstile, 0);
 
-        byte[] data = new byte[1024 * 1024 * ds.GetRasterCount()];
-        byte[] alpha = new byte[1024 * 1024];
-        if (rxsize != 0 && rysize != 0 && wxsize != 0 && wysize != 0) {
-            ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, dataType, data, getBandList(ds.GetRasterCount()));
-            alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, dataType, alpha);
-
-            logger.debug(String.format("rx,ry,rxsize,rysize,wxsize,wysize=%d,%d,%d,%d,%d,%d", rx, ry, rxsize, rysize, wxsize, wysize));
-        } else return;
-
-        if (tileSize == querysize) {
-            dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, data, getBandList(ds.getRasterCount()));
-            dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, alpha, new int[]{4});
-        } else {
-            Dataset dsquery = mem_drv.Create("", querysize, querysize, tileBands);
-            dsquery.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, data, getBandList(ds.getRasterCount()));
-            dsquery.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, alpha, new int[]{4});
-
-            scale_query_to_tile(dsquery, dstile, options, tilefilename);
-
-            dsquery.delete();
-        }
-        data = null;
-        alpha = null;
-        //antialias
-        if (!options.resampling.equalsIgnoreCase("antialias"))
-            out_drv.CreateCopy(tilefilename, dstile, 0);
-
-        dstile = null;
-
-        if (tileJobInfo.kml) {
-            generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), tileJobInfo.options, null);
+            if (tileJobInfo.kml) {
+                generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), tileJobInfo.options, null);
+            }
+            dstile.delete();
+            ds.delete();
         }
     }
 
@@ -592,8 +590,6 @@ public class CommonUtils {
             flag++;
         }
 
-        CommonUtils.cachedDs = null;
-
         CommonUtils.create_overview_tiles(gdal2TilesTemp, conf, gdal2TilesTemp.getOutput_folder(), runTask);
     }
 
@@ -601,43 +597,36 @@ public class CommonUtils {
         int nb_processes = gdal2TilesTemp.getOptions().nb_processes == null ? 1 : gdal2TilesTemp.getOptions().nb_processes;
         gdal.SetConfigOption("GDAL_CACHEMAX", String.valueOf(gdal.GetCacheMax() / nb_processes));
 
-        ExecutorService service = Executors.newFixedThreadPool(nb_processes, r -> {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
-        });
-
-        // 1.定义CompletionService
-        CompletionService<Integer> completionService = new ExecutorCompletionService<>(service);
-
         List<TileDetail> tile_details = new ArrayList<>();
+        ExecutorService service = null;
+
         try {
             runTask.updateTitle("初始化切片信息");
             TileJobInfo conf = CommonUtils.worker_tile_details(gdal2TilesTemp, tile_details);
             runTask.updateProgress(0, tile_details.size());
 
+            service = new ThreadPoolExecutor(1, nb_processes, 100L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>(1000), namedThreadFactory,
+                    new ThreadPoolExecutor.CallerRunsPolicy());
+
+            // 1.定义CompletionService
+            CompletionService<Long> completionService = new ExecutorCompletionService<>(service);
+
             runTask.updateTitle("生成基础切片");
-            for (int i = 0; i < tile_details.size(); i++) {
-                completionService.submit(new CommonUtils.BaseTileTask(i, conf, tile_details.get(i)));
+            for (TileDetail tileDetail : tile_details) {
+                completionService.submit(new CommonUtils.BaseTileTask(conf, tileDetail));
             }
 
-            int flag = 0;
             for (int i = 0; i < tile_details.size(); i++) {
-                //那个执行完了，就用那个
-                Integer result = completionService.take().get();
-                logger.info("已经完成：" + result);
-                runTask.updateProgress(flag++, tile_details.size());
+                Long result = completionService.take().get();
+                runTask.updateProgress(result + 1, tile_details.size());
             }
 
             CommonUtils.create_overview_tiles(gdal2TilesTemp, conf, gdal2TilesTemp.getOutput_folder(), runTask);
-            //结束线程
-            service.shutdown();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (service != null) service.shutdown();
         }
     }
 
@@ -648,21 +637,24 @@ public class CommonUtils {
         return new double[]{x, y};
     }
 
-    public static class BaseTileTask implements Callable<Integer> {
+    public static class BaseTileTask implements Callable<Long> {
         private TileDetail tileDetail;
         private TileJobInfo tileJobInfo;
-        private Integer index;
 
-        public BaseTileTask(Integer index, TileJobInfo tileJobInfo, TileDetail tileDetail) {
-            this.index = index;
+        public BaseTileTask(TileJobInfo tileJobInfo, TileDetail tileDetail) {
             this.tileJobInfo = tileJobInfo;
             this.tileDetail = tileDetail;
         }
 
         @Override
-        public Integer call() throws Exception {
-            create_base_tile(tileJobInfo, tileDetail);
-            return index;
+        public Long call() {
+            try {
+                create_base_tile(tileJobInfo, tileDetail);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                return tileDetail.index;
+            }
         }
     }
 }

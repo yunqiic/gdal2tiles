@@ -74,7 +74,7 @@ public class GlobalMercator {
 
     public double[] tileLatLonBounds(int tx, int ty, int zoom) {
         double[] bounds = this.tileBounds(tx, ty, zoom);
-        double[] minLatLon =this. metersToLatLon(bounds[0], bounds[1]);
+        double[] minLatLon = this.metersToLatLon(bounds[0], bounds[1]);
         double[] maxLatlon = this.metersToLatLon(bounds[2], bounds[3]);
         return new double[]{minLatLon[0], minLatLon[1], maxLatlon[0], maxLatlon[1]};
     }
@@ -86,13 +86,13 @@ public class GlobalMercator {
     public int zoomForPixelSize(double pixelSize) {
         for (int i = 0; i < MAXZOOMLEVEL; i++) {
             if (pixelSize > this.resolution(i)) {
-                return Math.max(0,i-1);
+                return Math.max(0, i - 1);
             }
         }
         return MAXZOOMLEVEL - 1;
     }
 
-    public int[] googleTile(int tx, int ty, int zoom) {
+    public static int[] googleTile(int tx, int ty, int zoom) {
         return new int[]{tx, ((int) (Math.pow(2, zoom)) - 1) - ty};
     }
 
@@ -113,7 +113,7 @@ public class GlobalMercator {
         return quadKey;
     }
 
-        public String tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
+    public String tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
         StringBuilder quadKey = new StringBuilder();
         for (int i = levelOfDetail; i > 0; i--) {
             char digit = '0';

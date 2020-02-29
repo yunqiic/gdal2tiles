@@ -16,6 +16,7 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,6 +74,7 @@ public class GDAL2Tiles {
     public GDAL2Tiles() {
         this.tmp_dir = System.getProperty("java.io.tmpdir");
         this.tmp_vrt_filename = new File(this.tmp_dir, UUID.randomUUID().toString() + ".vrt").getAbsolutePath();
+        new File(this.tmp_vrt_filename).deleteOnExit();
         this.scaledquery = true;
         this.querysize = 4 * this.tile_size;
         this.overviewquery = false;
@@ -81,6 +83,7 @@ public class GDAL2Tiles {
     public GDAL2Tiles(String input_file, String output_folder, OptionObj options) {
         this.tmp_dir = System.getProperty("java.io.tmpdir");
         this.tmp_vrt_filename = new File(this.tmp_dir, UUID.randomUUID().toString() + ".vrt").getAbsolutePath();
+        new File(this.tmp_vrt_filename).deleteOnExit();
         this.scaledquery = true;
         this.querysize = 4 * this.tile_size;
         this.overviewquery = false;
@@ -410,7 +413,7 @@ public class GDAL2Tiles {
 
         int tcount = (1 + Math.abs(tmaxx - tminx)) * (1 + Math.abs(tmaxy - tminy));
 
-        int ti = 0;
+        long ti = 0;
 
         int tz = this.tmaxz;
 
@@ -481,7 +484,7 @@ public class GDAL2Tiles {
                 }
                 ///开始处理图片了//////////////////////////////////////////////////////////////////////
 
-                tileDetails.add(new TileDetail(tx, ty, tz, rx, ry, rxsize, rysize, wx, wy, wxsize, wysize, querysize));
+                tileDetails.add(new TileDetail(ti, tx, ty, tz, rx, ry, rxsize, rysize, wx, wy, wxsize, wysize, querysize));
             }
         }
 
@@ -612,8 +615,8 @@ public class GDAL2Tiles {
         args.put("north", this.swne[2]);
         args.put("east", this.swne[3]);
 
-        args.put("centerlon", (this.swne[2] + this.swne[0]) / 2);
-        args.put("centerlat", (this.swne[1] + this.swne[3]) / 2);
+        args.put("centerlon", (this.swne[1] + this.swne[3]) / 2);
+        args.put("centerlat", (this.swne[2] + this.swne[0]) / 2);
 
         args.put("minzoom", this.tminz);
         args.put("maxzoom", this.tmaxz);
@@ -627,7 +630,7 @@ public class GDAL2Tiles {
 
         String s = "";
         try {
-            InputStream inputStream = MainApp.class.getClassLoader().getResourceAsStream("leaflet.html");
+            InputStream inputStream = MainApp.class.getClassLoader().getResourceAsStream("view/leaflet.html");
 
             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
             StringBuffer content = new StringBuffer();
@@ -661,12 +664,15 @@ public class GDAL2Tiles {
 
     private void generate_openlayers() {
         Map<String, Object> args = new HashMap<>();
-        args.put("title", "");
+        args.put("title", "openlayers3");
         args.put("bingkey", "this.options.bingkey");
         args.put("south", this.swne[0]);
         args.put("west", this.swne[1]);
         args.put("north", this.swne[2]);
         args.put("east", this.swne[3]);
+
+        args.put("centerlon", (this.swne[1] + this.swne[3]) / 2);
+        args.put("centerlat", (this.swne[2] + this.swne[0]) / 2);
 
         args.put("minzoom", this.tminz);
         args.put("maxzoom", this.tmaxz);
@@ -687,7 +693,7 @@ public class GDAL2Tiles {
             ClasspathResourceLoader resourceLoader = new ClasspathResourceLoader("/");
             //获取模板
             GroupTemplate gt = new GroupTemplate(resourceLoader, Configuration.defaultConfiguration());
-            Template template = gt.getTemplate("openlayers2.html");
+            Template template = gt.getTemplate("view/openlayers3.html");
             //渲染结果
             template.binding(args);
             String str = template.render();
@@ -696,7 +702,7 @@ public class GDAL2Tiles {
             Path rootLocation = Paths.get(this.output_folder);
             if (Files.notExists(rootLocation)) Files.createDirectories(rootLocation);
             //data.js是文件
-            Path path = rootLocation.resolve("openlayers2.html");
+            Path path = rootLocation.resolve("openlayers3.html");
             byte[] strToBytes = str.getBytes();
             Files.write(path, strToBytes);
         } catch (Exception ex) {

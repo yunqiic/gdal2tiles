@@ -3,8 +3,6 @@ package com.walkgis.tiles.web.ctrl;
 import com.walkgis.tiles.MainApp;
 import com.walkgis.tiles.entity.FileItem;
 import com.walkgis.tiles.web.MainViewController;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
@@ -15,14 +13,11 @@ import javafx.stage.FileChooser;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
-
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class PanelTileTypeSelectController implements Initializable {
-    @FXML
-    private GridPane panelTileTypeSelect;
     @FXML
     private AnchorPane panelStandard, panelGoogle, panelRaster, panelAdvance;
 

@@ -72,8 +72,7 @@
             })
         ],
         view: new ol.View({
-            //${west}, ${south}, ${east}, ${north}
-            center: [102.79632568359249, 24.98978658939942],
+            center: [${centerlon}, ${centerlat}],
             zoom: 18,
             projection: "EPSG:4326"
         })
@@ -81,21 +80,13 @@
 
     map.addLayer(
         new ol.layer.Tile({
-            // extent: [102.74139404296749, 102.85125732421749, 24.952444759841278, 25.02712841895756],
+            extent: [${west}, ${south}, ${east}, ${north}],
             source: new ol.source.XYZ({
-                tileUrlFunction: function (tileCoord) {
-                    var z = tileCoord[0];
-                    var x = tileCoord[1];
-                    y = Math.pow(2, z) + tileCoord[2] - 1;
-                    return './' + z + '/' + x + '_' + y + '.png';
-                },
+                url: './{z}/{x}_{-y}.png',
                 projection: "EPSG:3857"
             }),
-        }))
-
-    map.on("zoomend", function (event) {
-        console.log(event);
-    })
+        })
+    )
 </script>
 </body>
 </html>

@@ -17,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -31,7 +32,7 @@ public class PanelTileSettingController implements Initializable {
     private ComboBox cmbZoomFrom, cmbZoomTo;
     @FXML
     private Button btnSettingAdvance;
-    private GDAL2Tiles gdal2TilesTemp;
+    public static GDAL2Tiles gdal2TilesTemp;
 
     public ZoomComboboxModel zoomComboboxModel = new ZoomComboboxModel();
 
@@ -50,10 +51,10 @@ public class PanelTileSettingController implements Initializable {
         this.btnSettingAdvance.setOnMouseClicked(this::btnSettingAdvanceClick);
 
         this.cmbZoomFrom.setItems(zoomComboboxModel.getZoomFrom());
-        this.cmbZoomFrom.valueProperty().bind(zoomComboboxModel.getZoomFromValue());
+        this.cmbZoomFrom.valueProperty().bind(zoomComboboxModel.zoomFromValueProperty());
 
         this.cmbZoomTo.setItems(zoomComboboxModel.getZoomTo());
-        this.cmbZoomTo.valueProperty().bind(zoomComboboxModel.getZoomToValue());
+        this.cmbZoomTo.valueProperty().bind(zoomComboboxModel.zoomToValueProperty());
     }
 
     /**
@@ -62,16 +63,15 @@ public class PanelTileSettingController implements Initializable {
     public void init(File inputFile) {
         gdal2TilesTemp = new GDAL2Tiles();
         gdal2TilesTemp.setInput_file(inputFile.getAbsolutePath());
-        optionObj.nb_processes = 3;
         try {
             gdal2TilesTemp.setOptions(optionObj);
             gdal2TilesTemp.open_input();
-            zoomComboboxModel.setZoomFromValue(new SimpleIntegerProperty(gdal2TilesTemp.getTminz()));
-            zoomComboboxModel.setZoomToValue(new SimpleIntegerProperty(gdal2TilesTemp.getTmaxz()));
+
+            zoomComboboxModel.setZoomFromValue(gdal2TilesTemp.getTminz());
+            zoomComboboxModel.setZoomToValue(gdal2TilesTemp.getTmaxz());
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @FXML

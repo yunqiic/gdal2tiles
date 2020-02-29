@@ -12,8 +12,10 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import org.locationtech.jts.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -51,31 +53,37 @@ public class MainViewController implements Initializable {
             nextView(ViewNameEnum.panelFileList.name());
         } else if (currentView.equalsIgnoreCase(ViewNameEnum.panelFileList.toString())) {
             if (PanelFileListController.fileItems.size() == 0) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("告警");
-                alert.setHeaderText("没有输入文件");
-                alert.setContentText("没有输入文件");
-
-                alert.showAndWait();
+                alert("告警", "没有输入文件", Alert.AlertType.WARNING);
                 return;
             }
 
             if (PanelFileListController.fileItems.size() > 1) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("告警");
-                alert.setHeaderText("告警");
-                alert.setContentText("目前版本只支持一个影像");
-
-                alert.showAndWait();
+                alert("告警", "目前版本只支持一个影像", Alert.AlertType.WARNING);
                 return;
             }
             PanelTileSettingController controller = (PanelTileSettingController) nextView(ViewNameEnum.panelTileSetting.name());
             controller.init(PanelFileListController.fileItems.get(0).getFile());
         } else if (currentView.equalsIgnoreCase(ViewNameEnum.panelTileSetting.name())) {
-            //这里读取文件，并且计算出最大最小比例尺
+            if (PanelTileSettingController.gdal2TilesTemp == null) {
+                alert("告警", "没有初始化gdal2Tiles类", Alert.AlertType.WARNING);
+                return;
+            }
+            if (PanelTileSettingController.gdal2TilesTemp.getOutput_folder() == null || "".equalsIgnoreCase(PanelTileSettingController.gdal2TilesTemp.getOutput_folder())) {
+                alert("告警", "没有指定输出目录", Alert.AlertType.WARNING);
+                return;
+            }
+
             nextView(ViewNameEnum.panelProgress.name());
         } else if (currentView.equals(ViewNameEnum.panelProgress.name())) {
         }
+    }
+
+    public static void alert(String title, String content, Alert.AlertType type) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setContentText(content);
+
+        alert.showAndWait();
     }
 
     /**
@@ -91,7 +99,7 @@ public class MainViewController implements Initializable {
             BorderPane borderPane = (BorderPane) MainApp.scene.getRoot();
             borderPane.setCenter(parent);
             currentView = fxmlName;
-           return loader.getController();
+            return loader.getController();
         } catch (IOException e) {
             e.printStackTrace();
         }
