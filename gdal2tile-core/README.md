@@ -1,6 +1,6 @@
 ### 1. 代码说明
 > 1. 本使用的是jdk11,需要配置jdk11的环境变量
-> 2. windows 下GDAL环境变量的配置参考[连接][https://blog.csdn.net/h4x0r_007/article/details/43085615?utm_source=blogxgwz25]
+> 2. windows 下GDAL环境变量的配置参考[连接](https://blog.csdn.net/h4x0r_007/article/details/43085615?utm_source=blogxgwz25)
 
 ### 2. 调试打包
 
@@ -15,10 +15,3 @@
 ```
 > 会先打包成jar,然后拷贝libs204中的dll,以及生成的jar到指定位置. 接着执行命令:
 `java -jar gdal2tiles.jar`运行
-
-
-       
-
-
-
-[]: https://blog.csdn.net/h4x0r_007/article/details/43085615?utm_source=blogxgwz25
