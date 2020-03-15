@@ -24,11 +24,11 @@ public class MainApp extends Application {
     public MainApp() {
         Properties prop = new Properties();
         try {
-            prop.load(this.getClass().getResourceAsStream("/application.properties"));
+            prop.load(App.class.getClassLoader().getResourceAsStream("application.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        defaultDir = prop.getProperty("defaultDir", "E:\\Data\\Raster");
+        defaultDir = prop.getProperty("defaultDir", "C:\\");
 
         gdal.AllRegister();
         // 注册所有的驱动
@@ -37,7 +37,7 @@ public class MainApp extends Application {
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
         // 为了使属性表字段支持中文，请添加下面这句
         gdal.SetConfigOption("SHAPE_ENCODING", "");
-        gdal.SetConfigOption("GDAL_DATA", prop.getProperty("gdalDataDir", "D:\\GDAL204\\gdal-data"));
+        gdal.SetConfigOption("GDAL_DATA", prop.getProperty("gdalDataDir", "gdal-data"));
     }
 
     @Override

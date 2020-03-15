@@ -1,14 +1,20 @@
+### 1. 代码说明
+> 本使用的是jdk11,至于jdk11 的 javafx包,需要再 openfx官网下载.
 
--Djava.library.path=E:\projects\GIS\gdal2tiles\gdal2tile-core\libs 
+### 2. 调试打包
 
+##### 2.1 DEBUG 模式的时候 
+> 需要添加vm参数 -Djava.library.path=$/FileRelativeDir$\libs204
 
-You will need at least JDK1.8 patch level 40.
-## python脚本调用方式`
-` -p geodetic E:\Data\CAOBAO\aaa.tif E:\Data\CAOBAO\tiles\python `
+##### 2.2 打包的时候 
 
-## JVM参数
+> 打包时候首先配置pom.xml中 properties结点中的 outputDirectory 位置,然后执行下面命令:
 ```
---add-opens
-gdal2tile.core/com.walkgis.tiles=spring.core,spring.beans
-
+  mvn clean package
 ```
+> 会先打包成jar,然后拷贝libs204中的dll,以及生成的jar到指定位置. 接着执行命令:
+`java -jar gdal2tiles.jar`运行
+
+
+       
+
