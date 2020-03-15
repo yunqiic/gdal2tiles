@@ -1,5 +1,6 @@
 ### 1. 代码说明
-> 本使用的是jdk11,至于jdk11 的 javafx包,需要再 openfx官网下载.
+> 1. 本使用的是jdk11,需要配置jdk11的环境变量
+> 2. windows 下GDAL环境变量的配置参考[连接][https://blog.csdn.net/h4x0r_007/article/details/43085615?utm_source=blogxgwz25]
 
 ### 2. 调试打包
 
@@ -18,3 +19,6 @@
 
        
 
+
+
+[]: https://blog.csdn.net/h4x0r_007/article/details/43085615?utm_source=blogxgwz25
