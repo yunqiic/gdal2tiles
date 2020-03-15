@@ -4,11 +4,11 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class RunTask extends Task<Integer> {
-    private Logger logger = LoggerFactory.getLogger(RunTask.class);
+    private final static Log logger = LogFactory.getLog(RunTask.class);
     private GDAL2Tiles gdal2TilesTemp;
     private RunTask runTask;
     private SimpleStringProperty rateProperty = new SimpleStringProperty();

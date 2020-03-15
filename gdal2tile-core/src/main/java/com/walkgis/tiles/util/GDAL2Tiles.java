@@ -1,6 +1,8 @@
 package com.walkgis.tiles.util;
 
 import com.walkgis.tiles.MainApp;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.beetl.core.Configuration;
 import org.beetl.core.GroupTemplate;
 import org.beetl.core.Template;
@@ -14,8 +16,6 @@ import org.gdal.gdalconst.gdalconst;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -29,7 +29,7 @@ import java.util.*;
  * Date: 2017/12/13.
  */
 public class GDAL2Tiles {
-    private static final Logger logger = LoggerFactory.getLogger(GDAL2Tiles.class);
+    private final static Log logger = LogFactory.getLog(GDAL2Tiles.class);
 
     private Driver out_drv;
     private Driver mem_drv;

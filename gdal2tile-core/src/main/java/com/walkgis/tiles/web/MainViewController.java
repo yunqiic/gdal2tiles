@@ -3,8 +3,8 @@ package com.walkgis.tiles.web;
 import com.walkgis.tiles.MainApp;
 import com.walkgis.tiles.entity.ViewNameEnum;
 import com.walkgis.tiles.web.ctrl.PanelFileListController;
+import com.walkgis.tiles.web.ctrl.PanelProgressController;
 import com.walkgis.tiles.web.ctrl.PanelTileSettingController;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -12,16 +12,15 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
-import org.locationtech.jts.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class MainViewController implements Initializable {
-    private static final Logger logger = LoggerFactory.getLogger(MainViewController.class);
+    private final static Log logger = LogFactory.getLog(MainViewController.class);
     @FXML
     private Button btnProve, btnNext;
     public static String currentView;

@@ -30,9 +30,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.2</version>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -58,8 +58,8 @@
         <!--用来渲染前端HTML页面-->
         <dependency>
             <groupId>com.ibeetl</groupId>
-            <artifactId>beetl</artifactId>
-            <version>3.0.11.RELEASE</version>
+            <artifactId>beetlSQL</artifactId>
+            <version>2.12.12.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
@@ -70,6 +70,17 @@
 
     <build>
         <finalName>gdal2tiles</finalName>
+        <resources>
+            <resource>
+                <directory>${basedir}/libs204</directory>
+            </resource>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+<!--                <includes>-->
+<!--                    <include>application</include>-->
+<!--                </includes>-->
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

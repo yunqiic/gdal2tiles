@@ -1,13 +1,14 @@
 package com.walkgis.tiles.util;
 
+import com.walkgis.tiles.MainApp;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.Driver;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 import org.gdal.osr.SpatialReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -28,7 +29,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class CommonUtils {
-    private static final Logger logger = LoggerFactory.getLogger(CommonUtils.class);
+    private final static Log logger = LogFactory.getLog(CommonUtils.class);
 
     private static ThreadFactory namedThreadFactory = new ThreadFactory() {
         private int i = 0;
@@ -571,7 +572,7 @@ public class CommonUtils {
             dstile.SetGeoTransform(new double[]{0.0, 1.0, 0.0, 0.0, 0.0, 1.0});
             int res = gdal.ReprojectImage(dsquery, dstile, null, null, gdal_resampling);
             if (res != 0)
-                logger.error("ReprojectImage() failed on %s, error %f", tilefilename, res);
+                logger.error(String.format("ReprojectImage() failed on %s, error %f", tilefilename, res));
         }
     }
 

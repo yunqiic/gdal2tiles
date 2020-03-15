@@ -6,14 +6,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class PanelProgressController implements Initializable {
-    private final Logger logger = LoggerFactory.getLogger(PanelProgressController.class);
+    private final static Log logger = LogFactory.getLog(PanelProgressController.class);
 
     @FXML
     private Label lblProgressTop, lblProgressRate, lblProgressBottom;

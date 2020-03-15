@@ -10,13 +10,17 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.gdal.gdal.gdal;
 import org.gdal.ogr.ogr;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Properties;
 
 public class MainApp extends Application {
+    private final static Log logger = LogFactory.getLog(MainApp.class);
     public static Scene scene;
     public static Stage primaryStage;
     public static String defaultDir;
@@ -24,7 +28,7 @@ public class MainApp extends Application {
     public MainApp() {
         Properties prop = new Properties();
         try {
-            prop.load(App.class.getClassLoader().getResourceAsStream("application.properties"));
+            prop.load(this.getClass().getResourceAsStream("/application.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -37,7 +41,14 @@ public class MainApp extends Application {
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
         // 为了使属性表字段支持中文，请添加下面这句
         gdal.SetConfigOption("SHAPE_ENCODING", "");
-        gdal.SetConfigOption("GDAL_DATA", prop.getProperty("gdalDataDir", "gdal-data"));
+
+        String gdalData = "gdal-data";
+        URL url = this.getClass().getResource("/");
+        if (url != null)
+            gdalData = this.getClass().getResource("/").getPath().substring(1) + "gdal-data";
+
+        logger.debug(gdalData);
+        gdal.SetConfigOption("GDAL_DATA", gdalData);
     }
 
     @Override
