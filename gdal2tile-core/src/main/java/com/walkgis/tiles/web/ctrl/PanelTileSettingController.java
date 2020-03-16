@@ -3,6 +3,7 @@ package com.walkgis.tiles.web.ctrl;
 import com.walkgis.tiles.MainApp;
 import com.walkgis.tiles.entity.ZoomComboboxModel;
 import com.walkgis.tiles.util.GDAL2Tiles;
+import com.walkgis.tiles.util.GeoPackageUtil;
 import com.walkgis.tiles.util.OptionObj;
 import com.walkgis.tiles.util.SQLiteUtils;
 import com.walkgis.tiles.web.sub.AdvanceSettingViewController;
@@ -168,17 +169,17 @@ public class PanelTileSettingController implements Initializable {
             MainApp.defaultDir = System.getProperty("user.home");
         fileChooser.setInitialDirectory(new File(MainApp.defaultDir));
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("MBTiles", "*.mbtiles"),
-                new FileChooser.ExtensionFilter("SQLite", "*.db3")
+                new FileChooser.ExtensionFilter("MBTiles", "*.gpkg")
         );
-        fileChooser.setInitialFileName("tiles.mbtiles");
+        fileChooser.setInitialFileName("tiles.gpkg");
 
         File file = fileChooser.showSaveDialog(selectFile);
         if (file != null) {
             if (file.exists()) file.delete();
-            //这里初始化mbtiles
+            //这里初始化geopackage
+            GeoPackageUtil.getInstance().init(file);
             gdal2TilesTemp.setOutput_folder(file.getAbsolutePath());
-
+//
             PanelProgressController panelProgressController;
             Object o = nextView("panelProgress");
             if (o != null) {

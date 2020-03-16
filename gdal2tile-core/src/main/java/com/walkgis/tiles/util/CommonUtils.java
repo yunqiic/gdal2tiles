@@ -1,6 +1,5 @@
 package com.walkgis.tiles.util;
 
-import com.walkgis.tiles.MainApp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.gdal.gdal.Band;
@@ -14,7 +13,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -352,10 +350,11 @@ public class CommonUtils {
         return gdal2TilesTemp.generate_base_tiles(tile_details);
     }
 
-    public static void create_overview_tiles(GDAL2Tiles gdal2TilesTemp, TileJobInfo tileJobInfo, String outputFolder, RunTask runTask) {
+    public static void create_overview_tiles(GDAL2Tiles gdal2TilesTemp, TileJobInfo tileJobInfo, String outputFolder, RunTask runTask) throws IOException {
         Driver mem_driver = gdal.GetDriverByName("MEM");
         String tile_driver = tileJobInfo.tileDriver;
         Driver out_driver = gdal.GetDriverByName(tile_driver);
+        DealFun dealFun = tileJobInfo.dealFun;
 
         int tilebands = tileJobInfo.nbDataBands + 1;
 
@@ -379,17 +378,6 @@ public class CommonUtils {
             for (int ty = tminxytmaxxy[3]; ty > tminxytmaxxy[1] - 1; ty--) {
                 for (int tx = tminxytmaxxy[0]; tx < tminxytmaxxy[2] + 1; tx++) {
                     ti += 1;
-
-                    String tilefilename = outputFolder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileJobInfo.tileExtension);
-
-                    logger.debug(tilefilename);
-
-                    if (new File(tilefilename).exists()) {
-                        runTask.updateProgress(flag + 1, tcount);
-                        continue;
-                    }
-
-                    new File(tilefilename).getParentFile().mkdirs();
 
                     Dataset dsquery = mem_driver.Create("", 2 * tileJobInfo.tileSize, 2 * tileJobInfo.tileSize, tilebands);
                     Dataset dstile = mem_driver.Create("", tileJobInfo.tileSize, tileJobInfo.tileSize, tilebands);
@@ -425,10 +413,9 @@ public class CommonUtils {
                                 }
 
                                 byte[] temp = new byte[1024 * 1024 * 4];
-                                dsquerytile.ReadRaster(0, 0, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, dataType, temp,
-                                        new int[]{1, 2, 3, 4});
-                                dsquery.WriteRaster(tileposx, tileposy, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, dataType, temp,
-                                        getBandList(dsquery.getRasterCount()));
+                                dsquerytile.ReadRaster(0, 0, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, dataType, temp, new int[]{1, 2, 3, 4});
+
+                                dsquery.WriteRaster(tileposx, tileposy, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, tileJobInfo.tileSize, dataType, temp, getBandList(dsquery.getRasterCount()));
 
                                 children.add(new int[]{x, y, tz + 1});
                             }
@@ -437,10 +424,10 @@ public class CommonUtils {
 
                     if (children.size() > 0) {
                         OptionObj options = gdal2TilesTemp.getOptions();
-                        scale_query_to_tile(dsquery, dstile, options, tilefilename);
+                        scale_query_to_tile(dsquery, dstile, options, outputFolder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileJobInfo.tileExtension));
 
                         if (!gdal2TilesTemp.getOptions().resampling.equalsIgnoreCase("antialias"))
-                            out_driver.CreateCopy(tilefilename, dstile, 0);
+                            dealFun.dealImage(outputFolder, out_driver, dstile, tx, ty, tz, tileJobInfo.tileExtension);
 
                         if (tileJobInfo.kml)
                             generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), options, children);
@@ -456,12 +443,13 @@ public class CommonUtils {
         runTask.updateMessage("");
     }
 
-    public static void create_base_tile(TileJobInfo tileJobInfo, TileDetail tileDetail) {
+    public static void create_base_tile(TileJobInfo tileJobInfo, TileDetail tileDetail) throws IOException {
         int dataBandsCount = tileJobInfo.nbDataBands;
         String output = tileJobInfo.outputFilePath;
         String tileext = tileJobInfo.tileExtension;
         Integer tileSize = tileJobInfo.tileSize;
         OptionObj options = tileJobInfo.options;
+        DealFun dealFun = tileJobInfo.dealFun;
 
         int tileBands = dataBandsCount + 1;
         Dataset ds = gdal.Open(tileJobInfo.srcFile, gdalconst.GA_ReadOnly);
@@ -484,9 +472,6 @@ public class CommonUtils {
             int querysize = tileDetail.querysize;
             int dataType = 1;
 
-            String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
-            new File(tilefilename).getParentFile().mkdirs();
-
             Dataset dstile = mem_drv.Create("", tileSize, tileSize, tileBands);
 
             byte[] data = new byte[1024 * 1024 * ds.GetRasterCount()];
@@ -506,13 +491,14 @@ public class CommonUtils {
                 dsquery.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, data, getBandList(ds.getRasterCount()));
                 dsquery.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, dataType, alpha, new int[]{4});
 
-                scale_query_to_tile(dsquery, dstile, options, tilefilename);
+                scale_query_to_tile(dsquery, dstile, options, output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext));
 
                 dsquery.delete();
             }
             //antialias
-            if (!options.resampling.equalsIgnoreCase("antialias"))
-                out_drv.CreateCopy(tilefilename, dstile, 0);
+            if (!options.resampling.equalsIgnoreCase("antialias")){
+                dealFun.dealImage(output, out_drv, dstile, tx, ty, tz, tileext);
+            }
 
             if (tileJobInfo.kml) {
                 generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), tileJobInfo.options, null);

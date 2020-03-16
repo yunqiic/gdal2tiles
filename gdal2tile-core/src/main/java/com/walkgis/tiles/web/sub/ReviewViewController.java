@@ -49,7 +49,6 @@ public class ReviewViewController implements Initializable {
             temp.deleteOnExit();
             pngDriver.CreateCopy(temp.getAbsolutePath(), dstile, 0);
 
-
             BufferedImage bf = null;
             try {
                 bf = ImageIO.read(temp);

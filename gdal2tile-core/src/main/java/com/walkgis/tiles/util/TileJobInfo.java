@@ -23,13 +23,15 @@ public class TileJobInfo {
     public Boolean isEpsg4326 = false;
     public OptionObj options = null;
     public boolean excludeTransparent = false;
+    public DealFun dealFun;
 
 
-    public TileJobInfo(String srcFile, Integer nbDataBands, String outputFilePath,
+    public TileJobInfo(DealFun dealFun, String srcFile, Integer nbDataBands, String outputFilePath,
                        String tileExtension, String tileDriver, int tileSize,
                        boolean kml, List<int[]> tminmax, int tminz, int tmaxz,
                        String inSrsWkt, double[] outGeoTrans, double ominy,
                        boolean isEpsg4326, OptionObj options, boolean excludeTransparent) {
+        this.dealFun = dealFun;
         this.srcFile = srcFile;
         this.nbDataBands = nbDataBands;
         this.outputFilePath = outputFilePath;

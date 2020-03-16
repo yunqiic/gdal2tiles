@@ -24,6 +24,8 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 
+import static com.walkgis.tiles.util.CommonUtils.getBandList;
+
 /**
  * Created by JerFer
  * Date: 2017/12/13.
@@ -46,7 +48,6 @@ public class GDAL2Tiles {
     private double[] tileswne;
     private double[] swne;
     private double ominx, omaxx, omaxy, ominy;
-
 
     private String input_file;
     private String output_folder;
@@ -323,8 +324,10 @@ public class GDAL2Tiles {
     }
 
     public void generate_metadata() {
-        if (!new File(this.output_folder).exists())
-            new File(this.output_folder).mkdirs();
+        if (Files.isDirectory(Path.of(this.output_folder))) {
+            if (!new File(this.output_folder).exists())
+                new File(this.output_folder).mkdirs();
+        }
 
         double[] southWest = new double[2];
         double[] northEast = new double[2];
@@ -419,14 +422,8 @@ public class GDAL2Tiles {
 
         for (int ty = tmaxy; ty > tminy - 1; ty--) {
             for (int tx = tminx; tx < tmaxx + 1; tx++) {
+
                 ti += 1;
-
-                String tilefilename = this.output_folder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, this.tileext);
-
-                // TODO: 2020/2/18  这里可以判断重复的情况不处理
-
-                new File(tilefilename).getParentFile().mkdirs();
-
                 double[] b = null;
                 if (this.options.profile.equalsIgnoreCase("mercator")) {
                     b = this.mercator.tileBounds(tx, ty, tz);
@@ -488,7 +485,9 @@ public class GDAL2Tiles {
             }
         }
 
+        DealFun dealFun = createDealFun();
         return new TileJobInfo(
+                dealFun,
                 this.tmp_vrt_filename,
                 this.dataBandsCount,
                 this.output_folder,
@@ -506,6 +505,31 @@ public class GDAL2Tiles {
                 this.options,
                 this.options.exclude_transparent
         );
+    }
+
+    private DealFun createDealFun() {
+        return (output, out_drv, dstile, tx, ty, tz, tileext) -> {
+            if (Files.isDirectory(Path.of(this.output_folder))) {
+                String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
+                if (Files.notExists(Path.of(new File(tilefilename).getParent())))
+                    Files.createDirectories(Path.of(new File(tilefilename).getParent()));
+                out_drv.CreateCopy(tilefilename, dstile, 0);
+            } else {
+                String suffix = this.output_folder.substring(this.output_folder.lastIndexOf(".")).toLowerCase();
+                if (suffix.equalsIgnoreCase(".gpkg")) {
+                    int xSize = dstile.getRasterXSize();
+                    int ySize = dstile.getRasterYSize();
+                    int dataType = dstile.GetRasterBand(1).GetRasterDataType();
+                    byte[] dataArrayR = new byte[xSize * ySize * 4];
+
+                    dstile.ReadRaster(0, 0, xSize, ySize, xSize, ySize, dataType, dataArrayR, getBandList(4));
+
+                    GeoPackageUtil.getInstance().addTile(tx, ty, tz, dataArrayR);
+                } else if (suffix.equalsIgnoreCase(".mbtiles")) {
+
+                }
+            }
+        };
     }
 
     private int[][] geo_query(Dataset ds, double ulx, double uly, double lrx, double lry, int querysize) {
@@ -589,7 +613,11 @@ public class GDAL2Tiles {
             String str = template.render();
 
             //保存文本到文件
-            Path rootLocation = Paths.get(this.output_folder);
+            Path rootLocation = null;
+            if (Files.isDirectory(Path.of(this.output_folder)))
+                rootLocation = Paths.get(this.output_folder);
+            else rootLocation = Paths.get(new File(this.output_folder).getParent());
+
             if (Files.notExists(rootLocation)) Files.createDirectories(rootLocation);
             //data.js是文件
             Path path = rootLocation.resolve("tilemapresource.html");
@@ -599,7 +627,6 @@ public class GDAL2Tiles {
             ex.printStackTrace();
         }
     }
-
 
     private void generate_googlemaps() {
 
@@ -649,10 +676,12 @@ public class GDAL2Tiles {
             String str = t.render();
 
             //保存文本到文件
-            Path rootLocation = Paths.get(this.output_folder);
-            if (Files.notExists(rootLocation)) {
-                Files.createDirectories(rootLocation);
-            }
+            Path rootLocation = null;
+            if (Files.isDirectory(Path.of(this.output_folder)))
+                rootLocation = Paths.get(this.output_folder);
+            else rootLocation = Paths.get(new File(this.output_folder).getParent());
+
+            if (Files.notExists(rootLocation)) Files.createDirectories(rootLocation);
             //data.js是文件
             Path path = rootLocation.resolve("leaflet.html");
             byte[] strToBytes = str.getBytes();
@@ -699,7 +728,11 @@ public class GDAL2Tiles {
             String str = template.render();
 
             //保存文本到文件
-            Path rootLocation = Paths.get(this.output_folder);
+            Path rootLocation = null;
+            if (Files.isDirectory(Path.of(this.output_folder)))
+                rootLocation = Paths.get(this.output_folder);
+            else rootLocation = Paths.get(new File(this.output_folder).getParent());
+
             if (Files.notExists(rootLocation)) Files.createDirectories(rootLocation);
             //data.js是文件
             Path path = rootLocation.resolve("openlayers3.html");
