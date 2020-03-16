@@ -3,8 +3,12 @@ package com.walkgis.tiles.util;
 import org.beetl.sql.core.*;
 import org.beetl.sql.core.db.SQLiteStyle;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -54,13 +58,15 @@ public class GeoPackageUtil {
         }
     }
 
-    public void insertTile(String tableName, int tx, int ty, int tz, byte[] dataArrayR) throws SQLException {
+    public void insertTile(String tableName, int tx, int ty, int tz, BufferedImage bufferedImage) throws SQLException, IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ImageIO.write(bufferedImage, "png", byteArrayOutputStream);
         String sql = "INSERT INTO " + tableName + " VALUES (null,?, ?, ?, ?);";
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, tz);
         statement.setInt(2, tx);
         statement.setInt(3, ty);
-        statement.setBytes(4, dataArrayR);
+        statement.setBytes(4, byteArrayOutputStream.toByteArray());
 
         statement.executeUpdate();
         statement.close();

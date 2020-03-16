@@ -1,6 +1,8 @@
 package com.walkgis.tiles.util;
 
 import com.walkgis.tiles.MainApp;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beetl.core.Configuration;
@@ -17,12 +19,18 @@ import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.SinglePixelPackedSampleModel;
+import java.awt.image.WritableRaster;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.List;
 
 import static com.walkgis.tiles.util.CommonUtils.getBandList;
 
@@ -517,15 +525,11 @@ public class GDAL2Tiles {
             } else {
                 String suffix = this.output_folder.substring(this.output_folder.lastIndexOf(".")).toLowerCase();
                 if (suffix.equalsIgnoreCase(".gpkg")) {
-                    int xSize = dstile.getRasterXSize();
-                    int ySize = dstile.getRasterYSize();
-                    int dataType = dstile.GetRasterBand(1).GetRasterDataType();
-                    byte[] dataArrayR = new byte[xSize * ySize * 4];
-
-                    dstile.ReadRaster(0, 0, xSize, ySize, xSize, ySize, dataType, dataArrayR, getBandList(4));
-
+                    File file = new File(this.tmp_dir, UUID.randomUUID().toString() + ".png");
+                    out_drv.CreateCopy(file.getAbsolutePath(), dstile, 0);
                     try {
-                        GeoPackageUtil.getInstance().insertTile("tiles", tx, ty, tz, dataArrayR);
+                        GeoPackageUtil.getInstance().insertTile("tiles", tx, ty, tz, ImageIO.read(file));
+                        file.delete();
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
