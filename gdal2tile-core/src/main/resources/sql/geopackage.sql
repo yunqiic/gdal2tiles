@@ -1,3 +1,4 @@
+--属性实例
 CREATE TABLE sample_attributes (
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   text_attribute TEXT,
@@ -6,9 +7,9 @@ CREATE TABLE sample_attributes (
   raster_or_photo BLOB
 );
 
+
 INSERT INTO sample_attributes(text_attribute, real_attribute, boolean_attribute, raster_or_photo) VALUES ("place",  1,  true,  "BLOB VALUE");
-
-
+--矢量表示例
 CREATE TABLE sample_feature_table (
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   geometry GEOMETRY,
@@ -36,7 +37,7 @@ must be > 0')
 WHERE NOT (NEW.real_attribute > 0);
 END;
 
-
+-- 切片表示例
 
 CREATE TABLE sample_tile_pyramid (
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

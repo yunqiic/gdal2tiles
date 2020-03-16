@@ -524,7 +524,11 @@ public class GDAL2Tiles {
 
                     dstile.ReadRaster(0, 0, xSize, ySize, xSize, ySize, dataType, dataArrayR, getBandList(4));
 
-                    GeoPackageUtil.getInstance().addTile(tx, ty, tz, dataArrayR);
+                    try {
+                        GeoPackageUtil.getInstance().insertTile("tiles", tx, ty, tz, dataArrayR);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 } else if (suffix.equalsIgnoreCase(".mbtiles")) {
 
                 }
