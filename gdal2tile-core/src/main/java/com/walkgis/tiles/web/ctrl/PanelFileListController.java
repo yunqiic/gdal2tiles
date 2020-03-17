@@ -1,7 +1,7 @@
 package com.walkgis.tiles.web.ctrl;
 
 import com.walkgis.tiles.MainApp;
-import com.walkgis.tiles.entity.FileItem;
+import com.walkgis.tiles.web.entity.FileItem;
 import com.walkgis.tiles.web.sub.ReviewViewController;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -15,7 +15,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;

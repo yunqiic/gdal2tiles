@@ -1,4 +1,4 @@
-package com.walkgis.tiles.entity;
+package com.walkgis.tiles.web.entity;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;

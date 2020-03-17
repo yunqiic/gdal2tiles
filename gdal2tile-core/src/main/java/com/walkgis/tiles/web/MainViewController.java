@@ -1,9 +1,8 @@
 package com.walkgis.tiles.web;
 
 import com.walkgis.tiles.MainApp;
-import com.walkgis.tiles.entity.ViewNameEnum;
+import com.walkgis.tiles.web.entity.ViewNameEnum;
 import com.walkgis.tiles.web.ctrl.PanelFileListController;
-import com.walkgis.tiles.web.ctrl.PanelProgressController;
 import com.walkgis.tiles.web.ctrl.PanelTileSettingController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

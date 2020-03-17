@@ -1,5 +1,6 @@
 package com.walkgis.tiles.util;
 
+import com.walkgis.tiles.util.storage.Storage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.gdal.gdal.Band;
@@ -354,7 +355,8 @@ public class CommonUtils {
         Driver mem_driver = gdal.GetDriverByName("MEM");
         String tile_driver = tileJobInfo.tileDriver;
         Driver out_driver = gdal.GetDriverByName(tile_driver);
-        DealFun dealFun = tileJobInfo.dealFun;
+        TileSwne tileSwne = tileJobInfo.tileSwne;
+        Storage storage = tileJobInfo.storage;
 
         int tilebands = tileJobInfo.nbDataBands + 1;
 
@@ -427,7 +429,7 @@ public class CommonUtils {
                         scale_query_to_tile(dsquery, dstile, options, outputFolder + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileJobInfo.tileExtension));
 
                         if (!gdal2TilesTemp.getOptions().resampling.equalsIgnoreCase("antialias"))
-                            dealFun.dealImage(outputFolder, out_driver, dstile, tx, ty, tz, tileJobInfo.tileExtension);
+                            tileSwne.dealImage(storage, out_driver, dstile, tx, ty, tz, tileJobInfo.tileExtension);
 
                         if (tileJobInfo.kml)
                             generate_kml(tx, ty, tz, tileJobInfo.tileExtension, tileJobInfo.tileSize, get_tile_swne(tileJobInfo, options), options, children);
@@ -449,7 +451,8 @@ public class CommonUtils {
         String tileext = tileJobInfo.tileExtension;
         Integer tileSize = tileJobInfo.tileSize;
         OptionObj options = tileJobInfo.options;
-        DealFun dealFun = tileJobInfo.dealFun;
+        TileSwne tileSwne = tileJobInfo.tileSwne;
+        Storage storage = tileJobInfo.storage;
 
         int tileBands = dataBandsCount + 1;
         Dataset ds = gdal.Open(tileJobInfo.srcFile, gdalconst.GA_ReadOnly);
@@ -497,7 +500,7 @@ public class CommonUtils {
             }
             //antialias
             if (!options.resampling.equalsIgnoreCase("antialias")){
-                dealFun.dealImage(output, out_drv, dstile, tx, ty, tz, tileext);
+                tileSwne.dealImage(storage, out_drv, dstile, tx, ty, tz, tileext);
             }
 
             if (tileJobInfo.kml) {

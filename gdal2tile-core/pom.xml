@@ -58,8 +58,15 @@
         <!--用来渲染前端HTML页面-->
         <dependency>
             <groupId>com.ibeetl</groupId>
-            <artifactId>beetlSQL</artifactId>
-            <version>2.12.12.RELEASE</version>
+            <artifactId>beetl</artifactId>
+            <version>3.0.10.RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
+        <!--处理图片-->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>0.4.9</version>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>
@@ -76,9 +83,9 @@
             </resource>
             <resource>
                 <directory>${basedir}/src/main/resources</directory>
-<!--                <includes>-->
-<!--                    <include>application</include>-->
-<!--                </includes>-->
+                <!--                <includes>-->
+                <!--                    <include>application</include>-->
+                <!--                </includes>-->
             </resource>
         </resources>
         <plugins>

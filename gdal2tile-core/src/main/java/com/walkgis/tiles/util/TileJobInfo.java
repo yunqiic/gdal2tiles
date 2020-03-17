@@ -1,6 +1,8 @@
 package com.walkgis.tiles.util;
 
 
+import com.walkgis.tiles.util.storage.Storage;
+
 import java.util.List;
 
 /**
@@ -23,15 +25,17 @@ public class TileJobInfo {
     public Boolean isEpsg4326 = false;
     public OptionObj options = null;
     public boolean excludeTransparent = false;
-    public DealFun dealFun;
+    public TileSwne tileSwne;
+    public Storage storage;
 
 
-    public TileJobInfo(DealFun dealFun, String srcFile, Integer nbDataBands, String outputFilePath,
+    public TileJobInfo(TileSwne tileSwne,Storage storage, String srcFile, Integer nbDataBands, String outputFilePath,
                        String tileExtension, String tileDriver, int tileSize,
                        boolean kml, List<int[]> tminmax, int tminz, int tmaxz,
                        String inSrsWkt, double[] outGeoTrans, double ominy,
                        boolean isEpsg4326, OptionObj options, boolean excludeTransparent) {
-        this.dealFun = dealFun;
+        this.tileSwne = tileSwne;
+        this.storage = storage;
         this.srcFile = srcFile;
         this.nbDataBands = nbDataBands;
         this.outputFilePath = outputFilePath;

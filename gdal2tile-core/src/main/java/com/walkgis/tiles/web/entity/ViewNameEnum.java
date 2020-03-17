@@ -1,4 +1,4 @@
-package com.walkgis.tiles.entity;
+package com.walkgis.tiles.web.entity;
 
 public enum ViewNameEnum {
     panelTileTypeSelect("panelTileTypeSelect"), panelTileSetting("panelTileSetting"), panelProgress("panelProgress"), panelFileList("panelFileList");

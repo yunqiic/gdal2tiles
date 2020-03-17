@@ -1,8 +1,11 @@
 package com.walkgis.tiles.util;
 
 import com.walkgis.tiles.MainApp;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
+import com.walkgis.tiles.util.sqlite.DatabaseHelper;
+import com.walkgis.tiles.util.storage.FolderStorage;
+import com.walkgis.tiles.util.storage.GeopackageStorage;
+import com.walkgis.tiles.util.storage.MbtilesStorage;
+import com.walkgis.tiles.util.storage.Storage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.beetl.core.Configuration;
@@ -20,10 +23,6 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.SinglePixelPackedSampleModel;
-import java.awt.image.WritableRaster;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,8 +30,8 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
-
-import static com.walkgis.tiles.util.CommonUtils.getBandList;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by JerFer
@@ -79,6 +78,8 @@ public class GDAL2Tiles {
     private boolean kml = false;
 
     private OptionObj options = null;
+
+    private Storage storage;
 
     public GDAL2Tiles() {
         this.tmp_dir = System.getProperty("java.io.tmpdir");
@@ -388,8 +389,31 @@ public class GDAL2Tiles {
             )
                 this.generate_openlayers();
         }
-        // Generate tilemapresource.xml.
 
+
+        Map<String, String> metadata = new HashMap<String, String>();
+        metadata.put("description", "");
+        metadata.put("format", String.valueOf(5));
+        metadata.put("name", new File(this.input_file).getName());
+        metadata.put("type", "OVERLAY");
+        metadata.put("version", "1.0.0");
+
+        var list = Arrays.stream(this.swne).mapToObj(x -> String.valueOf(x)).collect(Collectors.toList());
+        metadata.put("bounds", String.join(",", list));
+
+        try {
+            if (new File(this.output_folder).isDirectory()) {
+                storage = FolderStorage.create(this.output_folder, metadata, "1.0.0");
+            } else if (this.output_folder.endsWith(".mbtiles")) {
+                storage = MbtilesStorage.create(this.output_folder, metadata, "1.0.0");
+            } else if (this.output_folder.endsWith(".gpkg")) {
+                storage = GeopackageStorage.create(this.output_folder, metadata, "1.0.0");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        // Generate tilemapresource.xml.
         this.generate_tilemapresource();
         if (this.kml) {
             List<int[]> children = new ArrayList<>();
@@ -493,9 +517,10 @@ public class GDAL2Tiles {
             }
         }
 
-        DealFun dealFun = createDealFun();
+        TileSwne tileSwne = createDealFun();
         return new TileJobInfo(
-                dealFun,
+                tileSwne,
+                this.storage,
                 this.tmp_vrt_filename,
                 this.dataBandsCount,
                 this.output_folder,
@@ -515,24 +540,18 @@ public class GDAL2Tiles {
         );
     }
 
-    private DealFun createDealFun() {
-        return (output, out_drv, dstile, tx, ty, tz, tileext) -> {
+    private TileSwne createDealFun() {
+        return (storage, out_drv, dstile, tx, ty, tz, tileext) -> {
             if (Files.isDirectory(Path.of(this.output_folder))) {
-                String tilefilename = output + File.separator + tz + File.separator + String.format("%s_%s.%s", tx, ty, tileext);
-                if (Files.notExists(Path.of(new File(tilefilename).getParent())))
-                    Files.createDirectories(Path.of(new File(tilefilename).getParent()));
+                String tilefilename = storage.filepath(tx, ty, tz, false);
                 out_drv.CreateCopy(tilefilename, dstile, 0);
             } else {
                 String suffix = this.output_folder.substring(this.output_folder.lastIndexOf(".")).toLowerCase();
                 if (suffix.equalsIgnoreCase(".gpkg")) {
                     File file = new File(this.tmp_dir, UUID.randomUUID().toString() + ".png");
                     out_drv.CreateCopy(file.getAbsolutePath(), dstile, 0);
-                    try {
-                        GeoPackageUtil.getInstance().insertTile("tiles", tx, ty, tz, ImageIO.read(file));
-                        file.delete();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    storage.save(tx, ty, tz, ImageIO.read(file));
+                    file.delete();
                 } else if (suffix.equalsIgnoreCase(".mbtiles")) {
 
                 }

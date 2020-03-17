@@ -1,7 +1,6 @@
 package com.walkgis.tiles.web.sub;
 
-import com.walkgis.tiles.entity.FileItem;
-import com.walkgis.tiles.web.MainViewController;
+import com.walkgis.tiles.web.entity.FileItem;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.image.ImageView;

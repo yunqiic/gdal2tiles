@@ -1,4 +1,4 @@
-package com.walkgis.tiles.util;
+package com.walkgis.tiles.util.sqlite;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -6,24 +6,115 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SQLiteUtils {
-    private Connection connection = null;
+public class DatabaseHelper {
+    private Connection connection;
+    private String driver = "org.sqlite.JDBC";
     private PreparedStatement pstat = null;
     private ResultSet rst = null;
+    private String filename;
 
-    public SQLiteUtils(String path) throws SQLException, ClassNotFoundException {
+
+    private static class DatabaseHelperInstance {
+        private static final DatabaseHelper instance = new DatabaseHelper();
+    }
+
+    private DatabaseHelper() {
+    }
+
+    public static DatabaseHelper getInstance() {
+        return DatabaseHelperInstance.instance;
+    }
+
+    public DatabaseHelper create(String filename, String mode) {
         try {
-            Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:" + path);
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            close();
+            Class.forName(driver);
+            connection = DriverManager.getConnection("jdbc:sqlite:" + filename);
+            executescript("PRAGMA application_id = 1196437808");
+            this.filename = filename;
+            return this;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void executescript(String sql) {
+        if (connection != null) {
+            try {
+                if (connection.isClosed()) {
+                    connection = DriverManager.getConnection("jdbc:sqlite:" + filename);
+                }
+                Statement statement = connection.createStatement();
+                statement.execute(sql);
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public Connection getConnection() {
-        return connection;
+    public void executesUpdate(String sql, Object... args) {
+        if (connection != null) {
+            try {
+                if (connection.isClosed()) {
+                    connection = DriverManager.getConnection("jdbc:sqlite:" + filename);
+                }
+                PreparedStatement statement = connection.prepareStatement(sql);
+                for (int i = 1; i <= args.length; i++) {
+                    statement.setObject(i, args[i - 1]);
+                }
+                statement.executeUpdate();
+                statement.clearParameters();
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public ResultSet executesQuery(String sql, Object... args) {
+        if (connection != null) {
+            try {
+                if (connection.isClosed()) {
+                    connection = DriverManager.getConnection("jdbc:sqlite:" + filename);
+                }
+                PreparedStatement statement = connection.prepareStatement(sql);
+                for (int i = 1; i <= args.length; i++) {
+                    statement.setObject(i, args[i - 1]);
+                }
+                ResultSet resultSet = statement.executeQuery();
+                statement.clearParameters();
+                statement.close();
+                return resultSet;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public boolean executesNuQuery(String sql, Object... args) {
+        if (connection != null) {
+            PreparedStatement statement = null;
+            try {
+                if (connection.isClosed()) {
+                    connection = DriverManager.getConnection("jdbc:sqlite:" + filename);
+                }
+                statement = connection.prepareStatement(sql);
+                for (int i = 1; i <= args.length; i++) {
+                    statement.setObject(i, args[i - 1]);
+                }
+                Boolean result = statement.execute();
+                statement.clearParameters();
+                statement.close();
+                return result;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
     /**
@@ -36,7 +127,6 @@ public class SQLiteUtils {
     public int execute(String sql, Object... args) {
         int executeUpdate = 0;
         try {
-            System.out.println("[SQL EXECUTE]: " + sql);
             pstat = connection.prepareStatement(sql);
             if (args.length > 0) {
                 for (int i = 0, len = args.length; i < len; i++) {
@@ -50,8 +140,6 @@ public class SQLiteUtils {
             if (rst != null) {
 
             }
-
-            System.out.println("[SQL EXECUTE RESULT]: " + executeUpdate);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -163,7 +251,7 @@ public class SQLiteUtils {
     /**
      * 清除单次查询的连接
      */
-    private void close() {
+    public void close() {
         if (rst != null) {
             try {
                 rst.close();
