@@ -21,11 +21,21 @@ public class Extent {
     }
 
     public double width() {
-        return this.maxx = this.minx;
+        return this.maxx - this.minx;
     }
 
     public double height() {
-        return this.maxy = this.miny;
+        return this.maxy - this.miny;
+    }
+
+    @Override
+    public String toString() {
+        return "Extent{" +
+                "minx=" + minx +
+                ", miny=" + miny +
+                ", maxx=" + maxx +
+                ", maxy=" + maxy +
+                '}';
     }
 
     public double getMinx() {

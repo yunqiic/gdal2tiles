@@ -1,24 +1,11 @@
 package org.walkgis.tiles.utfgrid.utfgrid;
 
-import cn.com.enersun.dgpmicro.problem.translation.LocationsWithShape;
-import com.github.davidmoten.rtree.Entry;
-import com.github.davidmoten.rtree.RTree;
-import com.github.davidmoten.rtree.geometry.Geometries;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKBReader;
-import org.locationtech.jts.io.WKTReader;
-import org.postgresql.util.PGobject;
-import rx.Observable;
+import org.gdal.ogr.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author JerFer
@@ -35,76 +22,93 @@ public class Renderer {
         this.req = ctrans.getRequest();
     }
 
-    public void apply(List<LocationsWithShape> data) throws ParseException {
-        RTree<String, com.github.davidmoten.rtree.geometry.Geometry> tree = RTree.create();
-        for (LocationsWithShape locationsWithShape : data) {
-            Object shapeObject = locationsWithShape.getShape();
-            if (shapeObject instanceof PGobject) {
-                Geometry geometry = new WKBReader().read(WKBReader.hexToBytes(((PGobject) shapeObject).getValue()));
-                if (geometry != null) {
-                    if (geometry.getGeometryType().equalsIgnoreCase("Point")) {
-                        Point point = (Point) geometry;
-                        tree = tree.add(locationsWithShape.getId(), Geometries.pointGeographic(point.getX(), point.getY()));
-                    } else {
-                        Envelope envelope = geometry.getEnvelopeInternal();
-                        tree = tree.add(locationsWithShape.getId(), Geometries.rectangleGeographic(envelope.getMinX(), envelope.getMinY(), envelope.getMaxX(), envelope.getMaxY()));
-                    }
-                }
-            }
+    public void apply(Layer layer, List<String> fieldNames) throws Exception {
+        FeatureDefn layerDef = layer.GetLayerDefn();
+        List<Field> fields = new ArrayList<>();
+
+        String geomName = layer.GetLayerDefn().GetGeomFieldDefn(0).GetName();
+
+        for (int i = 0, length = layerDef.GetFieldCount(); i < length; i++) {
+            FieldDefn field = layerDef.GetFieldDefn(i);
+            if (fieldNames.contains(field.GetName()))
+                fields.add(new Field(field.GetName(), field.GetFieldTypeName(field.GetFieldType())));
         }
+        if (fields.size() == 0)
+            throw new Exception("No valid fields, field_names was " + fieldNames.toString());
 
-        for (int y = 0, height = this.req.getHeight(); y < height; y += this.grid.getResolution()) {
-            List<String> row = new ArrayList();
-            for (int x = 0, width = this.req.getWidth(); x < width; x += this.grid.getResolution()) {
-                double[] minxy = this.ctrans.backward(x, y);
-                double[] maxxy = this.ctrans.backward(x + 1, y + 1);
-                String wkt = String.format("POLYGON ((%f %f, %f %f, %f %f, %f %f, %f %f))", minxy[0], maxxy[1], minxy[0], minxy[1], maxxy[0], minxy[1], maxxy[0], maxxy[1], minxy[0], maxxy[1]);
-                Polygon g = (Polygon) new WKTReader().read(wkt);
-                g.setSRID(4326);
-                Envelope envelope = g.getEnvelopeInternal();
-                com.github.davidmoten.rtree.geometry.Rectangle rectangle = Geometries.rectangleGeographic(envelope.getMinX(), envelope.getMinY(), envelope.getMaxX(), envelope.getMaxY());
+        layer.ResetReading();
+        for (int y = 0; y < this.req.getHeight(); y += this.grid.getResolution()) {
+            List<String> row = new ArrayList<>();
+            for (int x = 0; x < this.req.getWidth(); x += this.grid.getResolution()) {
+                double[] minxmaxy = this.ctrans.backward(x, y);
+                double[] maxxminy = this.ctrans.backward(x + 1, y + 1);
 
-                //空间查询
-                AtomicBoolean found = new AtomicBoolean(false);
-                Observable<Entry<String, com.github.davidmoten.rtree.geometry.Geometry>> results = tree.search(rectangle);
+                double minx = minxmaxy[0], maxy = minxmaxy[1], maxx = maxxminy[0], miny = maxxminy[1];
+                String wkt = String.format("POLYGON ((%f %f, %f %f, %f %f,%f %f, %f %f))", minx, miny, minx, maxy, maxx, maxy, maxx, miny, minx, miny);
+                Geometry g = ogr.CreateGeometryFromWkt(wkt);
+                layer.SetSpatialFilter(g);
+                boolean found = false;
+                Feature feat = layer.GetNextFeature();
+                while (feat != null) {
+                    Geometry geom = feat.GetGeomFieldRef(geomName);
+                    if (geom.Intersect(g)) {
+                        String feature_id = String.valueOf(feat.GetFID());
+                        row.add(feature_id);
+                        Map<String, Object> attr = new HashMap<>();
 
-                results.forEach(entity -> {
-                    String feature_id = entity.value();
-                    row.add(feature_id);
+                        for (int k = 0, len = fields.size(); k < len; k++) {
+                            Field field = fields.get(k);
 
-                    LocationsWithShape locationsWithShape = data.stream().filter(a -> a.getId().equalsIgnoreCase(feature_id)).findAny().get();
-                    Map<String, Object> attrs = new HashMap<>();
-                    attrs.put("id", locationsWithShape.getId());
-                    this.grid.getFeature_cache().put(feature_id, attrs);
-                    found.set(true);
-                });
-                if (!found.get())
+                            String fieldType = field.getType();
+                            String fieldName = field.getName();
+
+                            if (fieldType.equals("Integer"))
+                                attr.put(fieldName, feat.GetFieldAsInteger(k));
+                            else if (fieldType.equals("Real"))
+                                attr.put(fieldName, feat.GetFieldAsDouble(k));
+                            else
+                                attr.put(fieldName, feat.GetFieldAsString(k));
+                        }
+                        this.grid.getFeatureCache().put(feature_id, attr);
+                        found = true;
+                        feat = null;
+                    } else
+                        feat = layer.GetNextFeature();
+                }
+
+                if (!found)
                     row.add("");
             }
             this.grid.getRows().add(row);
         }
     }
 
-    /**
-     * Skip the codepoints that cannot be encoded directly in JSON.
-     *
-     * @return
-     */
-    public static int escape_codepoints(int codepoint) {
-        if (codepoint == 34)
-            codepoint += 1;
-        else if (codepoint == 92)
-            codepoint += 1;
-        return codepoint;
-    }
+    public class Field {
+        private String name;
+        private String type;
 
-    public static int decode_id(int codepoint) {
-//        codepoint = ord(codepoint);
-        if (codepoint >= 93)
-            codepoint -= 1;
-        if (codepoint >= 35)
-            codepoint -= 1;
-        codepoint -= 32;
-        return codepoint;
+        public Field() {
+        }
+
+        public Field(String name, String type) {
+            this.name = name;
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
     }
 }

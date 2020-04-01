@@ -7,8 +7,8 @@ package org.walkgis.tiles.utfgrid.utfgrid;
 public class CoordTransform {
     private Request request;
     private Extent extent;
-    private Double offset_x;
-    private Double offset_y;
+    private Double offset_x = 0.0;
+    private Double offset_y = 0.0;
     private Double sx;
     private Double sy;
 

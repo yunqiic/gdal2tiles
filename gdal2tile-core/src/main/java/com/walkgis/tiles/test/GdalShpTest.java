@@ -1,9 +1,7 @@
 package com.walkgis.tiles.test;
 
 import org.gdal.gdal.gdal;
-import org.gdal.ogr.DataSource;
-import org.gdal.ogr.Driver;
-import org.gdal.ogr.ogr;
+import org.gdal.ogr.*;
 
 import java.io.File;
 
@@ -24,6 +22,14 @@ public class GdalShpTest {
             System.out.println("打开文件失败！");
             ds.delete();
             return;
+        }
+
+        Layer layer = ds.GetLayer(0);
+
+        layer.ResetReading();
+        Feature feature = layer.GetNextFeature();
+        while (feature != null) {
+            System.out.println(feature.GetFID());
         }
         System.out.println("打开文件成功！");
         Driver dv = ogr.GetDriverByName("GeoJSON");
