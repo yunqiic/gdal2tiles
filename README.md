@@ -1,6 +1,7 @@
 # 代码组成
-> 有三个项目<br>
+> 有两个项目<br>
 * gdal2tile-core（真正的java重写版本）
+* gdal2tile-utfgrid（不完整）
 
 # gdal2tiles
 
