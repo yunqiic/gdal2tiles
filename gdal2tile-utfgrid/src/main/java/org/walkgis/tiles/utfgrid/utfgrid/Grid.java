@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.walkgis.tiles.utfgrid.util.UTFGridUtil.escapeCodepoints;
+import static org.walkgis.tiles.utfgrid.utfgrid.UTFGridTest.escapeCodepoints;
 
 /**
  * @author JerFer
