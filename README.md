@@ -21,13 +21,8 @@
 -profile raster E:\date\pdf\84.pdf E:\date\tiles
 ```
 
-
 # 上面注释可忽略
 
-### 代码里面有两个版本的gdal
-
-* 其中1.x版本的，通过libs方式，增加可以直接使用
-* 其中2.x版本的，不能通过libs方式加载，只能拷贝到java工程的根目录（不知道为什么，有知道的解决一下）
 ### 效果如下
 ![界面截图](https://raw.githubusercontent.com/polixiaohai/gdal2tiles/master/asset/img1.png)
 ![切片截图](https://raw.githubusercontent.com/polixiaohai/gdal2tiles/master/asset/img2.png)

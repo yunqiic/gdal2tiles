@@ -37,6 +37,7 @@ public class MainApp extends Application {
         gdal.AllRegister();
         // 注册所有的驱动
         ogr.RegisterAll();
+        gdal.SetConfigOption("GDAL_DATA", MainApp.class.getClassLoader().getResource("gdal-data").getFile().substring(1));
         // 为了支持中文路径，请添加下面这句代码
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
         // 为了使属性表字段支持中文，请添加下面这句
