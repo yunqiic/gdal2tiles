@@ -49,12 +49,6 @@
             <artifactId>jts-core</artifactId>
             <version>1.16.1</version>
         </dependency>
-        <!--引入lib中的gdal包-->
-        <dependency>
-            <groupId>org.gdal</groupId>
-            <artifactId>gdal</artifactId>
-            <version>${gdal.version}</version>
-        </dependency>
         <!--用来渲染前端HTML页面-->
         <dependency>
             <groupId>com.ibeetl</groupId>
