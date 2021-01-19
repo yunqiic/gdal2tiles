@@ -14,6 +14,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.osr;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -98,14 +99,7 @@ public class Gdal2Tiles {
         this.input = null;
         this.output = null;
 
-        this.options = new SrtmTileArgs();
-        this.options.setVerbose(args.getVerbose());
-        this.options.setInput(args.getInput());
-        this.options.setOutput(args.getOutput());
-        this.options.setZoom(args.getZoom());
-        this.options.setResampling(args.getResampling());
-        this.options.setTileExt(args.getTileExt());
-
+        this.options = args;
 
         if (options.getCesium()) {
             this.tilesize = 65;
@@ -121,13 +115,13 @@ public class Gdal2Tiles {
 
             if (this.options.getTileData().equalsIgnoreCase("Byte")) {
                 this.tiledata = gdalconstConstants.GDT_Byte;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = Byte.class;
             } else if (this.options.getTileData().equalsIgnoreCase("Int16")) {
                 this.tiledata = gdalconstConstants.GDT_Int16;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = Short.class;
             } else if (this.options.getTileData().equalsIgnoreCase("UInt16")) {
                 this.tiledata = gdalconstConstants.GDT_UInt16;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = Short.class;
             } else if (this.options.getTileData().equalsIgnoreCase("UInt32")) {
                 this.tiledata = gdalconstConstants.GDT_UInt32;
                 this.cesiumdata = Integer.class;
@@ -136,25 +130,25 @@ public class Gdal2Tiles {
                 this.cesiumdata = Integer.class;
             } else if (this.options.getTileData().equalsIgnoreCase("Float32")) {
                 this.tiledata = gdalconstConstants.GDT_Float32;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = Float.class;
             } else if (this.options.getTileData().equalsIgnoreCase("Float64")) {
                 this.tiledata = gdalconstConstants.GDT_Float64;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = Double.class;
             } else if (this.options.getTileData().equalsIgnoreCase("CInt16")) {
                 this.tiledata = gdalconstConstants.GDT_CInt16;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = null;
             } else if (this.options.getTileData().equalsIgnoreCase("CInt32")) {
                 this.tiledata = gdalconstConstants.GDT_CInt32;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = null;
             } else if (this.options.getTileData().equalsIgnoreCase("CFloat32")) {
                 this.tiledata = gdalconstConstants.GDT_CFloat32;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = null;
             } else if (this.options.getTileData().equalsIgnoreCase("CFloat64")) {
                 this.tiledata = gdalconstConstants.GDT_CFloat64;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = null;
             } else {
                 this.tiledata = gdalconstConstants.GDT_Byte;
-                this.cesiumdata = Integer.class;
+                this.cesiumdata = Byte.class;
             }
         }
 
@@ -291,16 +285,16 @@ public class Gdal2Tiles {
         else this.outSrs = this.inSrs;
 
         this.outDs = null;
-        if (this.options.getProfile().equalsIgnoreCase("mercator") ||
-                this.options.getProfile().equalsIgnoreCase("geodetic")) {
+        if (this.options.getProfile().equalsIgnoreCase("mercator") || this.options.getProfile().equalsIgnoreCase("geodetic")) {
             if (this.inDs.GetGeoTransform() == new double[]{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}
                     && this.inDs.GetGCPCount() == 0) {
                 throw new Exception("There is no georeference - neither affine transformation (worldfile) nor GCPs. You can generate only 'raster' profile tiles. Either gdal2tiles with parameter -p 'raster' or use another GIS software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs");
             }
 
             if (this.inSrs != null) {
-                if (!this.inSrs.ExportToProj4().equalsIgnoreCase(this.outSrs.ExportToProj4())
+                if (!this.inSrs.GetAuthorityCode("GEOGCS").equalsIgnoreCase(this.outSrs.GetAuthorityCode("GEOGCS"))
                         || this.inDs.GetGCPCount() != 0) {
+
                     this.outDs = gdal.AutoCreateWarpedVRT(this.inDs, this.inSrsWkt, this.outSrs.ExportToWkt());
                     if (this.options.getVerbose()) {
                         System.out.println("Warping of the raster by AutoCreateWarpedVRT (result saved into 'tiles.vrt')");
@@ -363,7 +357,7 @@ public class Gdal2Tiles {
             }
         }
 
-        if (this.outDs != null)
+        if (this.outDs == null)
             this.outDs = this.inDs;
 
         this.alphaband = this.outDs.GetRasterBand(1).GetMaskBand();
@@ -453,11 +447,11 @@ public class Gdal2Tiles {
                 this.tminmax.add(tz, new int[]{tminxy[0], tminxy[1], tmaxxy[0], tmaxxy[1]});
             }
 
-            if (this.tminz == 0) {
+            if (this.tminz == null) {
                 this.tminz = this.geodetic.zoomForPixelSize(this.outGt[1] *
                         Math.max(this.outDs.getRasterXSize(), this.outDs.getRasterYSize()) / (float) (this.tilesize));
             }
-            if (this.tmaxz == 0) {
+            if (this.tmaxz == null) {
                 this.tmaxz = this.geodetic.zoomForPixelSize(this.outGt[1]);
             }
 
@@ -690,19 +684,19 @@ public class Gdal2Tiles {
 
                 Dataset dstile = this.memDrv.Create("", this.tilesize, this.tilesize, tilebands, this.tiledata);
 
-                byte[] data = new byte[this.tilesize * this.tilesize * tilebands];
-                byte[] alpha = new byte[this.tilesize * this.tilesize];
-                byte[] datawater = new byte[this.tilesize * this.tilesize];
+                byte[] data = new byte[rxsize * rysize * this.dataBandsCount];
+                byte[] alpha = new byte[rxsize * rysize];
+                byte[] datawater = new byte[rxsize * rysize];
 
                 if (!this.options.getWaterMask()) {
-                    ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wxsize, ds.GetRasterBand(1).getDataType(), data, getBandList(this.dataBandsCount + 1));
+                    ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wxsize, ds.GetRasterBand(1).getDataType(), data, getBandList(this.dataBandsCount));
                     if (!this.options.getCesium() && !this.options.getSrtm()) {
                         this.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, this.alphaband.getDataType(), alpha);
                     }
 
                     if (this.tilesize == querysize) {
                         //Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-                        dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, this.tiledata, data, getBandList(this.dataBandsCount + 1));
+                        dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, this.tiledata, data, getBandList(this.dataBandsCount));
                         if (!this.options.getCesium() && !this.options.getSrtm())
                             dstile.WriteRaster(wx, wy, wxsize, wysize, wxsize, wysize, this.tiledata, alpha, getBandList(tilebands));
                     } else {
@@ -763,7 +757,7 @@ public class Gdal2Tiles {
                             for (int b = 1; b < dstile.getRasterCount() + 1; b++) {
                                 Band band = dstile.GetRasterBand(b);
                                 String fmt = pt2fmt(band.getDataType());
-                                byte[] pixel = new byte[1 * 1];
+                                byte[] pixel = new byte[4];
                                 band.ReadRaster(i, k, 1, 1, pixel);
                                 Integer pixval = this.byte2Int(pixel);
                                 pixvals.add(Double.valueOf(pixval));
@@ -783,7 +777,7 @@ public class Gdal2Tiles {
                                 for (int b = 1; b < dstile.GetRasterCount() + 1; b++) {
                                     Band band = dstile.GetRasterBand(b);
                                     String fmt = pt2fmt(band.getDataType());
-                                    byte[] pixel = new byte[1 * 1];
+                                    byte[] pixel = new byte[4];
                                     band.ReadRaster(i, k, 1, 1, pixel);
                                     Integer pixval = this.byte2Int(pixel);
                                     if (pixval >= -1000)
@@ -793,7 +787,7 @@ public class Gdal2Tiles {
                                         pixval = pixval - pixval;
                                         pixval = (pixval + 1000) * 5;
                                     }
-                                    byte[] xx = new byte[1];
+                                    byte[] xx = new byte[4];
                                     int2Bytes(pixval, xx, 0);
                                     band.WriteRaster(i, k, 1, 1, xx);
                                 }
@@ -804,13 +798,11 @@ public class Gdal2Tiles {
 
                 if (this.options.getCesium()) {
                     File previoustilefilename = new File(this.output, String.format("%s/%s/%s.%s", tz, tx - 1, ty, this.tileext));
-                    if (!previoustilefilename.getParentFile().exists())
-                        previoustilefilename.getParentFile().mkdirs();
                     if (previoustilefilename.exists()) {
                         for (int b = 1; b < dstile.GetRasterCount() + 1; b++) {
                             Band band = dstile.GetRasterBand(b);
                             for (int y = 0; y < dstile.GetRasterYSize(); y++) {
-                                byte[] pixel = new byte[1];
+                                byte[] pixel = new byte[4];
                                 band.ReadRaster(0, y, 1, 1, pixel);
                                 String fmt = pt2fmt(band.getDataType());
                                 Integer pixval = this.byte2Int(pixel);
@@ -822,7 +814,7 @@ public class Gdal2Tiles {
                                         pixval = (pixval + 1000) * 5;
                                     }
                                     Dataset pdstile = gdal.Open(previoustilefilename.getAbsolutePath(), gdalconstConstants.GA_Update);
-                                    byte[] xx = new byte[1];
+                                    byte[] xx = new byte[4];
                                     int2Bytes(pixval, xx, 0);
                                     pdstile.GetRasterBand(b).WriteRaster(dstile.GetRasterXSize() - 1, y, 1, 1, xx);
                                     pdstile.delete();
@@ -834,7 +826,7 @@ public class Gdal2Tiles {
                                 previoustilefilename.getParentFile().mkdirs();
                             if (previoustilefilename.exists()) {
                                 for (int x = 0; x < dstile.getRasterXSize(); x++) {
-                                    byte[] pixel = new byte[1];
+                                    byte[] pixel = new byte[4];
                                     band.ReadRaster(x, 0, 1, 1, pixel);
                                     String fmt = pt2fmt(band.getDataType());
                                     Integer pixval = this.byte2Int(pixel);
@@ -846,7 +838,7 @@ public class Gdal2Tiles {
                                             pixval = (pixval + 1000) * 5;
                                         }
                                         Dataset pdstile = gdal.Open(previoustilefilename.getAbsolutePath(), gdalconstConstants.GA_Update);
-                                        byte[] xx = new byte[1];
+                                        byte[] xx = new byte[4];
                                         int2Bytes(pixval, xx, 0);
                                         pdstile.GetRasterBand(b).WriteRaster(x, dstile.getRasterYSize() - 1, 1, 1, xx);
                                         pdstile.delete();
@@ -858,26 +850,27 @@ public class Gdal2Tiles {
                     }
                 }
                 if (!this.options.getResampling().equalsIgnoreCase("antialias")) {
-                    this.outDrv.CreateCopy(tilefilename.getAbsolutePath(), dstile, 0);
+                    Dataset tmp = this.outDrv.CreateCopy(tilefilename.getAbsolutePath(), dstile, 0);
+                    if (tmp != null) tmp.delete();
                     if (this.options.getCesium() && !exists) {
                         try {
                             FileInputStream src = FileUtils.openInputStream(tilefilename);
                             FileOutputStream dst = FileUtils.openOutputStream(new File(tilefilename.getAbsoluteFile() + ".new"));
+                            // TODO: 2021/1/19 0019 这里其实是把byte转成Ascii码
                             byte[] data2 = new byte[2];
-                            src.read(data2, 0, 2);
-                            while (data2.length > 0) {
-                                Integer a = byte2Int(data);
+                            while (src.read(data2) != -1) {
+                                Short a = Utils.bytes2Short(data2);
                                 if (a >= -1000)
-                                    a = (a + 1000) * 5;
+                                    a = (short) ((a + (short) 1000) * 5);
                                 else {
-                                    a = a - a;
-                                    a = (a + 1000) * 5;
+                                    //set NODATA TO NULL
+                                    a = (short) (a - a);
+                                    a = (short) ((a + (short) 1000) * 5);
                                 }
                                 dst.write(a);
-                                src.read(data2, 0, 2);
                             }
                             src.close();
-//                            dst.write(new byte[]{'\x00', '\x00'});
+//                            dst.write(new char[]{'\x00', '\x00'});
                             data2 = null;
                             if (this.options.getWaterMask()) {
                                 data2 = FileUtils.readFileToByteArray(waterfilename.getAbsoluteFile());
@@ -1103,14 +1096,14 @@ public class Gdal2Tiles {
 
                                 if (!this.options.getWaterMask()) {
                                     byte[] data = new byte[this.tilesize * this.tilesize * this.dataBandsCount];
-                                    dsquerytile.ReadRaster(0, 0, this.tilesize, this.tilesize, this.tilesize, this.tilesize, this.tiledata, data, getBandList(tilebands + 1));
-                                    dsquery.WriteRaster(tileposx, tileposy, this.tilesize, this.tilesize, tilesize, tilesize, this.tiledata, data, getBandList(tilebands + 1));
+                                    dsquerytile.ReadRaster(0, 0, this.tilesize, this.tilesize, this.tilesize, this.tilesize, this.tiledata, data, getBandList(tilebands));
+                                    dsquery.WriteRaster(tileposx, tileposy, this.tilesize, this.tilesize, tilesize, tilesize, this.tiledata, data, getBandList(tilebands));
                                 } else {
                                     byte[] data = new byte[this.tilesize * this.tilesize * this.dataBandsCount];
-                                    dsquerytile.ReadRaster(0, 0, this.tilesize, this.tilesize, this.tilesize, this.tilesize, this.tiledata, data, getBandList(tilebands + 1));
+                                    dsquerytile.ReadRaster(0, 0, this.tilesize, this.tilesize, this.tilesize, this.tilesize, this.tiledata, data, getBandList(tilebands));
                                     dsquery.GetRasterBand(1).WriteRaster(tileposx, tileposy, this.tilesize, this.tilesize, data);
                                     byte[] data2 = new byte[256 * 256 * this.dataBandsCount];
-                                    dsquerywater.ReadRaster(0, 0, 256, 256, 256, 256, this.tiledata, data2, getBandList(tilebands + 1));
+                                    dsquerywater.ReadRaster(0, 0, 256, 256, 256, 256, this.tiledata, data2, getBandList(tilebands));
                                     dswaterquery.GetRasterBand(1).WriteRaster(tileposx, tileposy, 256, 256, data2);
                                 }
                                 children.add(new int[]{x, y, tz + 1});
@@ -1137,7 +1130,7 @@ public class Gdal2Tiles {
                                 List<Double> pixvals = new ArrayList<>();
                                 for (int b = 1; b < dstile.GetRasterCount() + 1; b++) {
                                     Band band = dstile.GetRasterBand(b);
-                                    byte[] xx = new byte[1];
+                                    byte[] xx = new byte[4];
                                     band.ReadRaster(i, k, 1, 1, xx);
                                     Integer pixval = byte2Int(xx);
                                     pixvals.add((double) pixval);
@@ -1147,11 +1140,11 @@ public class Gdal2Tiles {
                                     for (int b = 1; b < dstile.GetRasterCount() + 1; b++) {
                                         Band band = dstile.GetRasterBand(b);
                                         if (!this.tiledriver.equalsIgnoreCase("Ehdr")) {
-                                            byte[] xx = new byte[1];
+                                            byte[] xx = new byte[4];
                                             int2Bytes(datajoin[b - 1 * k * i], xx, 0);
                                             band.WriteRaster(i, k, 1, 1, xx);
                                         } else {
-                                            byte[] xx = new byte[1];
+                                            byte[] xx = new byte[4];
                                             int2Bytes(datajoin[k * i], xx, 0);
                                             band.WriteRaster(i, k, 1, 1, xx);
                                         }
@@ -1203,11 +1196,11 @@ public class Gdal2Tiles {
     }
 
     public static int[] getBandList(int bandCount) {
-        int[] bandArray = new int[bandCount];
-        for (int i = 0; i < bandCount; i++) {
-            bandArray[i] = i + 1;
+        int[] list = new int[bandCount];
+        for (int i = 1; i < bandCount + 1; i++) {
+            list[i - 1] = (i);
         }
-        return bandArray;
+        return list;
     }
 
     public static void main(String[] args) {
@@ -1219,18 +1212,24 @@ public class Gdal2Tiles {
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
         // 为了使属性表字段支持中文，请添加下面这句
         gdal.SetConfigOption("SHAPE_ENCODING", "");
-        gdal.SetConfigOption("CPL_DEBUG", "ON");
+        gdal.SetConfigOption("CPL_DEBUG", "OFF");
 
 
         try {
             SrtmTileArgs srtmTileArgs = new SrtmTileArgs();
             srtmTileArgs.setInput("F:\\Data\\cjjc\\大红山铁矿现状已有地形影像资料\\塌陷区影像图-坐标系为WGS84\\地理坐标\\20201030塌陷区dem84.地理坐标.tif");
             srtmTileArgs.setOutput("F:\\Data\\cjjc\\大红山铁矿现状已有地形影像资料\\塌陷区影像图-坐标系为WGS84\\地理坐标\\terrain");
-            srtmTileArgs.setZoom("0-20");
+            srtmTileArgs.setZoom("0-18");
+            srtmTileArgs.setProfile("geodetic");
             srtmTileArgs.setResampling("near");
+            srtmTileArgs.setResume(true);
             srtmTileArgs.setVerbose(true);
             srtmTileArgs.setCesium(true);
             srtmTileArgs.setTileExt("terrain");
+
+            File file = new File(srtmTileArgs.getOutput());
+            FileUtils.deleteDirectory(file);
+            file.mkdirs();
 
             new Gdal2Tiles(srtmTileArgs).process();
         } catch (Exception e) {
