@@ -1,5 +1,12 @@
 package com.walkgis.tiles.test.terrain;
 
+import org.gdal.gdal.Band;
+import org.gdal.gdalconst.gdalconstConstants;
+
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
+
 public class Utils {
     /**
      * 字符串转换为Ascii
@@ -42,5 +49,21 @@ public class Utils {
             retVal |= (data2[i] & 0xFF) << ((i & 0x03) << 1);
         }
         return retVal;
+    }
+
+    public static byte[] readRaster() {
+        return null;
+    }
+
+    public static BigDecimal bandToPixvals(Band band, int i, int k, int xsize, int ysize) throws Exception {
+        if (band.getDataType() == gdalconstConstants.GDT_Byte) {
+            byte[] pixel = new byte[xsize * ysize];//最多是八位，所以，取个最大值。
+            band.ReadRaster(i, k, xsize, ysize, pixel);
+            return new BigDecimal(ByteBuffer.wrap(pixel).get());
+        } else if (band.getDataType() == gdalconstConstants.GDT_Int16) {
+            short[] pixel = new short[xsize * ysize];
+            band.ReadRaster(i, k, xsize, ysize, pixel);
+            return new BigDecimal(ShortBuffer.wrap(pixel).get());
+        } else throw new Exception("不支持的类型");
     }
 }
