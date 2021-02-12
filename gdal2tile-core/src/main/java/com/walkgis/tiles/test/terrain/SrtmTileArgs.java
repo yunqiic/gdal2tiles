@@ -9,6 +9,7 @@ public class SrtmTileArgs {
     private Boolean resume = false;
     private String srcnodata ;
     private Boolean verbose = false;
+    private String title;
     /**
      * Join exist tiles and new generating tiles. Work if stored tile size == genereting tile size
      */
@@ -35,6 +36,7 @@ public class SrtmTileArgs {
     private Boolean waterMask = false;
     private String output;
     private String input;
+    private String url;
 
     public String getVersion() {
         return version;
@@ -178,5 +180,21 @@ public class SrtmTileArgs {
 
     public void setInput(String input) {
         this.input = input;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

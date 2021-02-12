@@ -762,6 +762,7 @@ public class GDAL2Srtmtiles {
                         }
                     }
                 }
+
                 if (this.options.getJoin() && exists) {
                     if (this.options.getVerbose())
                         System.out.println("---Write join data.");
@@ -801,6 +802,7 @@ public class GDAL2Srtmtiles {
                                     Band band = dstile.GetRasterBand(b);
                                     String fmt = pt2fmt(band.getDataType());
                                     byte[] pixel = new byte[4];
+                                    Utils.bandToPixvals(band, i, k, 1, 1);
                                     band.ReadRaster(i, k, 1, 1, pixel);
                                     Integer pixval = this.byte2Int(pixel);
                                     if (pixval >= -1000)
@@ -883,7 +885,6 @@ public class GDAL2Srtmtiles {
                             if (dstile.GetRasterBand(1).getDataType() == gdalconstConstants.GDT_Int16) {
                                 byte[] data2 = new byte[2];
                                 while (src.read(data2) != -1) {
-
                                     Short a = Utils.bytes2Short(data2);
                                     if (a >= -1000)
                                         a = (short) ((a + (short) 1000) * 5);
@@ -920,17 +921,16 @@ public class GDAL2Srtmtiles {
                     dsjoin.delete();
                 }
 
-//                if (this.kml) {
-//                    File kmlFileName = new File(this.output, String.format("%s/%s/%d.kml", tz, tx, ty));
-//                    if (!this.options.getResume() || !kmlFileName.exists()) {
-//
-//                    }
-//                }
+                if (this.kml) {
+                    File kmlFileName = new File(this.output, String.format("%s/%s/%d.kml", tz, tx, ty));
+                    if (!this.options.getResume() || !kmlFileName.exists()) {
+
+                    }
+                }
                 if (!this.options.getVerbose())
                     this.progressbar(ti / (double) tcount);
             }
         }
-
     }
 
     private void int2Bytes(int i, byte[] buf, int offset) {
@@ -1139,7 +1139,7 @@ public class GDAL2Srtmtiles {
                                 else tileposx = 0;
 
                                 if (!this.options.getWaterMask()) {
-                                    byte[] data = new byte[this.tilesize * this.tilesize * this.dataBandsCount];
+                                    short[] data = new short[this.tilesize * this.tilesize * this.dataBandsCount];
                                     dsquerytile.ReadRaster(0, 0, this.tilesize, this.tilesize, this.tilesize, this.tilesize, this.tiledata, data, getBandList(tilebands));
                                     dsquery.WriteRaster(tileposx, tileposy, this.tilesize, this.tilesize, tilesize, tilesize, this.tiledata, data, getBandList(tilebands));
                                 } else {
@@ -1259,8 +1259,8 @@ public class GDAL2Srtmtiles {
 
         try {
             SrtmTileArgs srtmTileArgs = new SrtmTileArgs();
-            srtmTileArgs.setInput("E:\\Data\\10米DEM\\clip.tif");
-            srtmTileArgs.setOutput("E:\\Data\\10米DEM\\terrain");
+            srtmTileArgs.setInput("F:\\Data\\0.5米DEM\\TIFF.tif");
+            srtmTileArgs.setOutput("F:\\Data\\0.5米DEM\\terrain");
             srtmTileArgs.setZoom("0-18");
             srtmTileArgs.setProfile("geodetic");
             srtmTileArgs.setResampling("near");

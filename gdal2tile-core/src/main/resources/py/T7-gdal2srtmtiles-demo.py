@@ -2646,11 +2646,11 @@ if __name__ == '__main__':
                 '--cesium',
                 '--resume',
                 '-z',
-                '0-20',
+                '0-18',
                 '-p',
                 'geodetic',
-                u"F:\\Data\\cjjc\\大红山铁矿现状已有地形影像资料\\塌陷区影像图-坐标系为WGS84\\地理坐标\\20201030塌陷区dem.tif",
-                u"F:\\projects\\cesium-demo\\terrain"]
+                u"F:\\Data\\0.5米DEM\\TIFF.tif",
+                u"F:\\Data\\0.5米DEM\\terrainRight"]
     print(sys.argv)
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv:
