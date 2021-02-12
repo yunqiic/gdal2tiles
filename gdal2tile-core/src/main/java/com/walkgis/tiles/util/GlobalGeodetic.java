@@ -1,8 +1,6 @@
 package com.walkgis.tiles.util;
 
 
-import com.walkgis.tiles.common.ContentValue;
-
 import static com.walkgis.tiles.common.ContentValue.MAXZOOMLEVEL;
 
 /**
